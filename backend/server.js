@@ -10,14 +10,43 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 
-// ── CORS مفتوح عشان يشتغل من الهاتف والكمبيوتر بنفس الشبكة
+// ── CORS مفتوح
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// ── MongoDB Connection ─────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB error:', err));
+
+// ── KEEP-ALIVE: يحافظ على الاتصال شغال دايماً ─────────────
+// بيبعت ping لقاعدة البيانات كل 4 دقائق عشان متنامش
+setInterval(async () => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.db.admin().ping();
+      console.log('🔄 Keep-alive ping sent to MongoDB —', new Date().toLocaleTimeString());
+    } else {
+      console.log('⚠️ MongoDB not connected, attempting reconnect...');
+      mongoose.connect(process.env.MONGO_URI).catch(e => console.error('Reconnect failed:', e.message));
+    }
+  } catch (err) {
+    console.error('Keep-alive error:', err.message);
+  }
+}, 4 * 60 * 1000); // كل 4 دقائق
+
+// ── إعادة اتصال تلقائي عند الانقطاع ────────────────────────
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ MongoDB disconnected. Reconnecting...');
+  setTimeout(() => {
+    mongoose.connect(process.env.MONGO_URI).catch(e => console.error('Reconnect failed:', e.message));
+  }, 5000);
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err.message);
+});
 
 // ── Models ──────────────────────────────────────────────────
 const clientSchema = new mongoose.Schema({
@@ -45,14 +74,21 @@ const Admin = mongoose.model('Admin', adminSchema);
 
 // ── Seed Admin ───────────────────────────────────────────────
 async function seedAdmin() {
-  const exists = await Admin.findOne({ username: 'admin' });
-  if (!exists) {
-    const hashed = await bcrypt.hash('admin123', 10);
-    await Admin.create({ username: 'admin', password: hashed });
-    console.log('👤 Admin created → username: admin | password: admin123');
+  try {
+    const exists = await Admin.findOne({ username: 'admin' });
+    if (!exists) {
+      const hashed = await bcrypt.hash('Sara2001', 10);
+      await Admin.create({ username: 'admin', password: hashed });
+      console.log('👤 Admin created → username: admin | password: Sara2001');
+    }
+  } catch (err) {
+    console.error('Seed admin error:', err.message);
   }
 }
-seedAdmin();
+
+mongoose.connection.once('open', () => {
+  seedAdmin();
+});
 
 // ── Multer ───────────────────────────────────────────────────
 const uploadDir = path.join(__dirname, 'uploads');
@@ -82,6 +118,19 @@ function auth(req, res, next) {
     res.status(401).json({ message: 'Invalid token' });
   }
 }
+
+// ── HEALTH CHECK (لـ UptimeRobot) ──────────────────────────
+app.get('/', (_, res) => {
+  res.json({
+    status: 'ok',
+    mongo: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    time: new Date().toISOString()
+  });
+});
+
+app.get('/health', (_, res) => {
+  res.json({ status: 'ok', mongo: mongoose.connection.readyState === 1 });
+});
 
 // ── PUBLIC ROUTES ────────────────────────────────────────────
 
@@ -202,8 +251,5 @@ app.get('/api/admin/gallery', auth, async (_, res) => {
   }
 });
 
-const PORT = process.env.PORT || 10000;   // غير 5000 إلى 10000
-
-app.listen(PORT, '0.0.0.0', () => 
-  console.log(`🚀 Server running on port ${PORT}`)
-);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => console.log('🚀 Server running on port ' + PORT));
