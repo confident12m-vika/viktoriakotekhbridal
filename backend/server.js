@@ -21,7 +21,6 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error('❌ MongoDB error:', err));
 
 // ── KEEP-ALIVE: يحافظ على الاتصال شغال دايماً ─────────────
-// بيبعت ping لقاعدة البيانات كل 4 دقائق عشان متنامش
 setInterval(async () => {
   try {
     if (mongoose.connection.readyState === 1) {
@@ -34,7 +33,7 @@ setInterval(async () => {
   } catch (err) {
     console.error('Keep-alive error:', err.message);
   }
-}, 4 * 60 * 1000); // كل 4 دقائق
+}, 4 * 60 * 1000);
 
 // ── إعادة اتصال تلقائي عند الانقطاع ────────────────────────
 mongoose.connection.on('disconnected', () => {
@@ -75,11 +74,11 @@ const Admin = mongoose.model('Admin', adminSchema);
 // ── Seed Admin ───────────────────────────────────────────────
 async function seedAdmin() {
   try {
-    const exists = await Admin.findOne({ username: 'admin' });
+    const exists = await Admin.findOne({ username: 'Viktoriyaadmin' });
     if (!exists) {
-      const hashed = await bcrypt.hash('admin123', 10);
-      await Admin.create({ username: 'admin', password: hashed });
-      console.log('👤 Admin created → username: admin | password: Sara2001');
+      const hashed = await bcrypt.hash('Sara2001', 10);
+      await Admin.create({ username: 'Viktoriyaadmin', password: hashed });
+      console.log('👤 Admin created → username: Viktoriyaadmin | password: Sara2001');
     }
   } catch (err) {
     console.error('Seed admin error:', err.message);
