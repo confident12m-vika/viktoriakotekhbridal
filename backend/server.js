@@ -77,7 +77,7 @@ async function seedAdmin() {
   try {
     const exists = await Admin.findOne({ username: 'admin' });
     if (!exists) {
-      const hashed = await bcrypt.hash('Sara2001', 10);
+      const hashed = await bcrypt.hash('admin123', 10);
       await Admin.create({ username: 'admin', password: hashed });
       console.log('👤 Admin created → username: admin | password: Sara2001');
     }
