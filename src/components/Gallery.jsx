@@ -41,7 +41,7 @@ function Gallery() {
     return () => { document.body.style.overflow = ""; };
   }, [lightboxSrc]);
 
-  const adminImages = dbImages.map(img => ({ src: `${API}${img.url}`, id: img._id }));
+  const adminImages = dbImages.map(img => ({ src: img.url.startsWith("http") ? img.url : `${API}${img.url}`, id: img._id }));
   const staticImages = STATIC.map((src, i) => ({ src, id: `static-${i}` }));
   const allImages = [...adminImages, ...staticImages];
 

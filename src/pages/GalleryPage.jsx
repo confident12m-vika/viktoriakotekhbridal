@@ -52,8 +52,9 @@ function GalleryPage() {
   // scroll to top
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
+  // يدعم رابط Cloudinary الكامل (https://...) والروابط النسبية القديمة (/uploads/...)
   const adminImages = dbImages.map(img => ({
-    src: `${API}${img.url}`,
+    src: img.url.startsWith("http") ? img.url : `${API}${img.url}`,
     id: img._id,
     caption: img.caption || "",
     type: "Couture"
