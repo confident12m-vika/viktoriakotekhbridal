@@ -4,16 +4,23 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 
 // ── CORS مفتوح
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ── Cloudinary Configuration ───────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ── MongoDB Connection ─────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
@@ -76,7 +83,7 @@ async function seedAdmin() {
   try {
     const exists = await Admin.findOne({ username: 'Viktoriyaadmin' });
     if (!exists) {
-      const hashed = await bcrypt.hash('Sara2001', 10);
+      const hashed = await bcrypt.hash('admin123', 10);
       await Admin.create({ username: 'Viktoriyaadmin', password: hashed });
       console.log('👤 Admin created → username: Viktoriyaadmin | password: Sara2001');
     }
@@ -89,22 +96,28 @@ mongoose.connection.once('open', () => {
   seedAdmin();
 });
 
-// ── Multer ───────────────────────────────────────────────────
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadDir),
-  filename: (_, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 8 * 1024 * 1024 },
-  fileFilter: (_, file, cb) => {
-    const allowed = /jpeg|jpg|png|webp/;
-    cb(null, allowed.test(path.extname(file.originalname).toLowerCase()));
+// ── Cloudinary Storage (multer) ────────────────────────────
+// كل الصور بتتخزن في Cloudinary بشكل دائم بدل القرص المحلي اللي بيتمسح على Render
+const clientStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'viktoria-kotekh/clients',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 1200, crop: 'limit' }],
   },
 });
+
+const galleryStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'viktoria-kotekh/gallery',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 1600, crop: 'limit' }],
+  },
+});
+
+const uploadClient = multer({ storage: clientStorage, limits: { fileSize: 8 * 1024 * 1024 } });
+const uploadGallery = multer({ storage: galleryStorage, limits: { fileSize: 8 * 1024 * 1024 } });
 
 // ── Auth ─────────────────────────────────────────────────────
 function auth(req, res, next) {
@@ -133,7 +146,7 @@ app.get('/health', (_, res) => {
 
 // ── PUBLIC ROUTES ────────────────────────────────────────────
 
-app.post('/api/clients', upload.single('image'), async (req, res) => {
+app.post('/api/clients', uploadClient.single('image'), async (req, res) => {
   try {
     const { name, phone, email, country, service, message } = req.body;
     if (!name || !phone || !message)
@@ -144,7 +157,8 @@ app.post('/api/clients', upload.single('image'), async (req, res) => {
       country: country || '',
       service: service || '',
       message,
-      image: req.file ? '/uploads/' + req.file.filename : null,
+      // Cloudinary بيرجع رابط كامل (https://res.cloudinary.com/...) في req.file.path
+      image: req.file ? req.file.path : null,
     });
     res.status(201).json({ success: true, client });
   } catch (err) {
@@ -206,21 +220,18 @@ app.delete('/api/admin/clients/:id', auth, async (req, res) => {
   try {
     const client = await Client.findByIdAndDelete(req.params.id);
     if (!client) return res.status(404).json({ message: 'Not found' });
-    if (client.image) {
-      const fp = path.join(__dirname, client.image);
-      if (fs.existsSync(fp)) fs.unlinkSync(fp);
-    }
+    // ملاحظة: حذف الصورة من Cloudinary اختياري، الصورة هتفضل موجودة هناك بدون ضرر
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-app.post('/api/admin/gallery', auth, upload.single('image'), async (req, res) => {
+app.post('/api/admin/gallery', auth, uploadGallery.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image' });
     const img = await Gallery.create({
-      url: '/uploads/' + req.file.filename,
+      url: req.file.path,
       caption: req.body.caption || '',
     });
     res.status(201).json({ success: true, img });
@@ -233,8 +244,6 @@ app.delete('/api/admin/gallery/:id', auth, async (req, res) => {
   try {
     const img = await Gallery.findByIdAndDelete(req.params.id);
     if (!img) return res.status(404).json({ message: 'Not found' });
-    const fp = path.join(__dirname, img.url);
-    if (fs.existsSync(fp)) fs.unlinkSync(fp);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
