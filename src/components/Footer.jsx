@@ -63,14 +63,14 @@ function Footer() {
           <p>📞 +20 155 540 5699</p>
           <p>✉️ info@viktoriakotekh.com</p>
           <p>📍 Cairo, Egypt</p>
-          <p>✈️ Barcelona, Spain</p>
+          <p>✈️ madrid, Spain</p>
         </div>
 
       </div>
 
       <div className="footer-bottom">
         <p>© 2026 Viktoria Kotekh. All rights reserved.</p>
-        <p>Crafted with passion · Cairo & Barcelona</p>
+        <p>Crafted with passion · Cairo & Madrid</p>
       </div>
     </footer>
   );

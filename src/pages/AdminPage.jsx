@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// يدعم رابط Cloudinary الكامل (https://...) والروابط النسبية القديمة (/uploads/...)
+const imgUrl = (path) => {
+  if (!path) return '';
+  return path.startsWith('http') ? path : `${API}${path}`;
+};
+
 const S = {
   wrap:{minHeight:'100vh',background:'#080808',color:'white',fontFamily:"'Jost',sans-serif"},
   header:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 40px',borderBottom:'1px solid rgba(201,168,76,0.2)',flexWrap:'wrap',gap:'10px'},
@@ -138,7 +144,7 @@ function Clients({ token, onLogout }) {
             {clients.map(c=>(
               <div key={c._id} style={S.card} onClick={()=>setSelected(c)}>
                 <div style={S.imgBox}>
-                  {c.image ? <img src={`${API}${c.image}`} alt={c.name} style={S.imgEl} /> : <div style={S.avatar}>👤</div>}
+                  {c.image ? <img src={imgUrl(c.image)} alt={c.name} style={S.imgEl} /> : <div style={S.avatar}>👤</div>}
                 </div>
                 <div style={S.info}>
                   <div style={S.name}>{c.name}</div>
@@ -173,10 +179,10 @@ function Clients({ token, onLogout }) {
             {selected.image && (
               <div style={{position:"relative"}}>
                 <img
-                  src={`${API}${selected.image}`}
+                  src={imgUrl(selected.image)}
                   alt=""
                   style={S.modalImg}
-                  onClick={() => setImgLightbox(`${API}${selected.image}`)}
+                  onClick={() => setImgLightbox(imgUrl(selected.image))}
                   title="Click to view full size"
                 />
                 <span style={{fontSize:'10px',color:'rgba(255,255,255,0.3)',letterSpacing:'1px'}}>Click image to enlarge</span>
@@ -258,7 +264,7 @@ function GalleryAdmin({ token }) {
       <div style={S.galleryGrid}>
         {images.map(img=>(
           <div key={img._id} style={S.galleryCard}>
-            <img src={`${API}${img.url}`} alt={img.caption} style={S.galleryImg} />
+            <img src={imgUrl(img.url)} alt={img.caption} style={S.galleryImg} />
             <button style={S.galleryDel} onClick={()=>del(img._id)}>✕</button>
           </div>
         ))}
