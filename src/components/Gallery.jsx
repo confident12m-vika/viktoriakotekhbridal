@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -15,6 +15,8 @@ const STATIC = [
 function Gallery() {
   const [dbImages, setDbImages] = useState([]);
   const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [centeredId, setCenteredId] = useState(null);
+  const trackRef = useRef(null);
   const navigate = useNavigate();
 
   const loadImages = useCallback(async () => {
@@ -48,17 +50,51 @@ function Gallery() {
   // عرض 6 صور بس في الصفحة الرئيسية
   const previewImages = allImages.slice(0, 6);
 
+  // يحدد أي صورة في منتصف الشاشة عشان نضيفلها التوهج
+  const updateCentered = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const trackRect = track.getBoundingClientRect();
+    const trackCenter = trackRect.left + trackRect.width / 2;
+
+    let closestId = null;
+    let closestDist = Infinity;
+    track.querySelectorAll("[data-gallery-item]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const itemCenter = r.left + r.width / 2;
+      const dist = Math.abs(itemCenter - trackCenter);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestId = el.dataset.galleryItem;
+      }
+    });
+    setCenteredId(closestId);
+  }, []);
+
+  useEffect(() => {
+    updateCentered();
+    const track = trackRef.current;
+    if (!track) return;
+    track.addEventListener("scroll", updateCentered, { passive: true });
+    window.addEventListener("resize", updateCentered);
+    return () => {
+      track.removeEventListener("scroll", updateCentered);
+      window.removeEventListener("resize", updateCentered);
+    };
+  }, [updateCentered, previewImages.length]);
+
   return (
     <section id="gallery" className="gallery reveal">
       <span className="section-label">Portfolio</span>
       <h2 className="section-title">Bridal Gallery</h2>
       <div className="section-line"></div>
 
-      <div className="gallery-grid">
+      <div className="gallery-grid" ref={trackRef}>
         {previewImages.map((img) => (
           <div
-            className="gallery-item"
+            className={`gallery-item ${centeredId === img.id ? "is-centered" : ""}`}
             key={img.id}
+            data-gallery-item={img.id}
             onClick={() => setLightboxSrc(img.src)}
           >
             <img src={img.src} alt="Gallery" loading="lazy" />
