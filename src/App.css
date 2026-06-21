@@ -81,7 +81,7 @@ body{font-family:'Jost',sans-serif;background:var(--white);color:var(--black);ov
 .story-btn:hover{background:var(--gold);color:var(--black);}
 
 /* SERVICES */
-.services{padding:130px 60px;background:var(--white);text-align:center;}
+.services{padding:130px 60px;background:var(--off-white);text-align:center;}
 .services-container{max-width:1200px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:60px;}
 .service-card{position:relative;overflow:hidden;cursor:pointer;}
 .service-card img{width:100%;height:380px;object-fit:cover;transition:transform 0.8s ease;}
@@ -301,19 +301,19 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
 
 .contact-social a:empty, .footer-social-row a:empty { display: none; }
 
-.reviews { padding: 130px 60px; background: var(--black); text-align: center; }
+.reviews { padding: 130px 60px; background: var(--off-white); text-align: center; }
 .reviews .section-label { color: var(--gold); }
-.reviews .section-title { color: white; }
+.reviews .section-title { color: var(--black); }
 .reviews-grid { max-width: 1200px; margin: 60px auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.review-card { background: #111; border: 1px solid rgba(201,168,76,0.12); padding: 32px 28px; text-align: left; transition: border-color 0.3s; }
-.review-card:hover { border-color: rgba(201,168,76,0.35); }
+.review-card { background: white; border: 1px solid var(--border); padding: 32px 28px; text-align: left; transition: border-color 0.3s; }
+.review-card:hover { border-color: rgba(201,168,76,0.5); }
 .review-stars { color: #c9a84c; font-size: 16px; letter-spacing: 2px; margin-bottom: 16px; }
-.review-text { color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.8; font-weight: 300; font-style: italic; margin-bottom: 24px; flex: 1; }
+.review-text { color: #555; font-size: 14px; line-height: 1.8; font-weight: 300; font-style: italic; margin-bottom: 24px; flex: 1; }
 .review-footer { display: flex; align-items: center; gap: 12px; }
-.review-avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; justify-content: center; color: #c9a84c; font-family: 'Cormorant Garamond', serif; font-size: 18px; flex-shrink: 0; }
-.review-name { font-size: 13px; color: white; font-weight: 500; letter-spacing: 1px; }
-.review-country { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
-.review-date { font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 1px; margin-left: auto; }
+.review-avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; justify-content: center; color: #c9a84c; font-family: 'Cormorant Garamond', serif; font-size: 18px; flex-shrink: 0; }
+.review-name { font-size: 13px; color: var(--black); font-weight: 500; letter-spacing: 1px; }
+.review-country { font-size: 11px; color: var(--gray); margin-top: 2px; }
+.review-date { font-size: 10px; color: rgba(0,0,0,0.3); letter-spacing: 1px; margin-left: auto; }
 
 @media(max-width: 900px) { .reviews-grid { grid-template-columns: repeat(2, 1fr); } }
 @media(max-width: 600px) { .reviews { padding: 80px 24px; } .reviews-grid { grid-template-columns: 1fr; } }
@@ -695,4 +695,74 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
 
 @media(max-width: 420px) {
   .review-card { width: 230px !important; }
+}
+
+/* ══════════════════════════════════════
+   MOBILE-ONLY: Story section — image and text side by side
+   to save vertical space (instead of stacked)
+══════════════════════════════════════ */
+@media(max-width: 768px) {
+  .story-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+  .story-image {
+    flex: 0 0 42% !important;
+    width: 42% !important;
+  }
+  .story-image img {
+    height: auto !important;
+    min-height: 280px;
+    max-height: 420px;
+  }
+  .story-text {
+    flex: 1 1 58% !important;
+    min-width: 0;
+  }
+  .story-text p {
+    font-size: 12.5px !important;
+    line-height: 1.65 !important;
+    margin-bottom: 12px !important;
+  }
+  .story-flags {
+    flex-wrap: wrap;
+    gap: 6px !important;
+    margin: 14px 0 !important;
+  }
+  .flag-tag {
+    font-size: 8.5px !important;
+    padding: 5px 10px !important;
+  }
+  .story-badge {
+    margin-top: 10px !important;
+    padding: 14px 16px !important;
+  }
+  .story-badge strong {
+    font-size: 26px !important;
+  }
+  .story-btn {
+    padding: 11px 24px !important;
+    font-size: 9px !important;
+  }
+}
+
+/* ══════════════════════════════════════
+   MOBILE-ONLY: stronger, fully opaque background for the
+   expanded service card so text/background are clearly visible
+══════════════════════════════════════ */
+@media(max-width: 768px) {
+  .service-card.is-expanded {
+    background: var(--black);
+  }
+  .service-card.is-expanded .service-overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.92) 45%, rgba(0,0,0,0.55) 100%) !important;
+  }
+  .service-card.is-expanded .service-overlay h3 {
+    color: #fff;
+  }
+  .service-card.is-expanded .service-overlay p {
+    color: rgba(255,255,255,0.85) !important;
+  }
 }

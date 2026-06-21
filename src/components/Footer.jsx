@@ -63,7 +63,7 @@ function Footer() {
           <p>📞 +20 155 540 5699</p>
           <p>✉️ info@viktoriakotekh.com</p>
           <p>📍 Cairo, Egypt</p>
-          <p>✈️ madrid, Spain</p>
+          <p>✈️ Madrid, Spain</p>
         </div>
 
       </div>
