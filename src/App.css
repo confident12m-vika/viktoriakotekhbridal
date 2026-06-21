@@ -582,68 +582,78 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
 
 /* ══════════════════════════════════════
    MOBILE-ONLY: Services tap-to-expand-in-place
+   Card grows within the grid itself (no fixed/centered overlay),
+   full image visible (no cropping), full text visible
    Desktop hover behavior is untouched
 ══════════════════════════════════════ */
 @media(max-width: 768px) {
 
+  .services-container {
+    grid-auto-rows: auto;
+  }
+
   .service-card {
-    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    transition: all 0.35s ease;
   }
 
   .service-card.is-expanded {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(1);
-    width: min(90vw, 380px);
-    height: min(70vh, 520px);
-    max-height: 520px;
-    z-index: 2000;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,168,76,0.4);
+    grid-column: 1 / -1;
+    height: auto;
+    background: var(--black);
+    box-shadow: 0 10px 34px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,168,76,0.35);
     border-radius: 2px;
   }
 
+  /* الصورة تبان كاملة من كل الجوانب من غير قص */
   .service-card.is-expanded img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: 240px !important;
+    object-fit: contain !important;
+    background: #000;
+    padding: 6px;
   }
 
-  /* النص يبان كامل ومنظم لما الكارت يتكبر */
+  /* النص بياخد مكانه تحت الصورة بدل ما يتراكب فوقها */
   .service-card.is-expanded .service-overlay {
-    padding: 24px !important;
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.15) 100%) !important;
+    position: static !important;
+    inset: auto !important;
+    padding: 16px 18px 20px !important;
+    background: var(--black) !important;
+    text-align: center;
   }
 
   .service-card.is-expanded .service-overlay h3 {
-    font-size: 19px !important;
-    margin-bottom: 10px !important;
-    line-height: 1.35;
+    font-size: 17px !important;
+    margin-bottom: 8px !important;
+    line-height: 1.3;
+    color: #fff;
   }
 
   .service-card.is-expanded .service-overlay p {
-    font-size: 13px !important;
-    line-height: 1.7 !important;
+    font-size: 12.5px !important;
+    line-height: 1.65 !important;
     -webkit-line-clamp: unset !important;
     display: block !important;
     overflow: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+    color: rgba(255,255,255,0.8) !important;
   }
 
   .service-card.is-expanded .service-num {
-    font-size: 34px !important;
+    display: none;
   }
 
   .service-close-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 34px;
-    height: 34px;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.3);
     color: white;
-    font-size: 15px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -698,71 +708,34 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
 }
 
 /* ══════════════════════════════════════
-   MOBILE-ONLY: Story section — image and text side by side
-   to save vertical space (instead of stacked)
+   MOBILE-ONLY: Footer layout — Navigation + Services side by side
+   (short content), Contact full-width and centered below
+   Brand stays on its own row above, unchanged
 ══════════════════════════════════════ */
 @media(max-width: 768px) {
-  .story-container {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: flex-start !important;
-    gap: 16px !important;
+  .footer-top {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 28px !important;
   }
-  .story-image {
-    flex: 0 0 42% !important;
-    width: 42% !important;
-  }
-  .story-image img {
-    height: auto !important;
-    min-height: 280px;
-    max-height: 420px;
-  }
-  .story-text {
-    flex: 1 1 58% !important;
-    min-width: 0;
-  }
-  .story-text p {
-    font-size: 12.5px !important;
-    line-height: 1.65 !important;
-    margin-bottom: 12px !important;
-  }
-  .story-flags {
-    flex-wrap: wrap;
-    gap: 6px !important;
-    margin: 14px 0 !important;
-  }
-  .flag-tag {
-    font-size: 8.5px !important;
-    padding: 5px 10px !important;
-  }
-  .story-badge {
-    margin-top: 10px !important;
-    padding: 14px 16px !important;
-  }
-  .story-badge strong {
-    font-size: 26px !important;
-  }
-  .story-btn {
-    padding: 11px 24px !important;
-    font-size: 9px !important;
-  }
-}
 
-/* ══════════════════════════════════════
-   MOBILE-ONLY: stronger, fully opaque background for the
-   expanded service card so text/background are clearly visible
-══════════════════════════════════════ */
-@media(max-width: 768px) {
-  .service-card.is-expanded {
-    background: var(--black);
+  /* Brand takes the full row on top */
+  .footer-brand {
+    grid-column: 1 / -1;
   }
-  .service-card.is-expanded .service-overlay {
-    background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.92) 45%, rgba(0,0,0,0.55) 100%) !important;
+
+  /* the 3 .footer-col siblings are, in DOM order: Navigation, Services, Contact */
+  .footer-col {
+    grid-column: span 1;
   }
-  .service-card.is-expanded .service-overlay h3 {
-    color: #fff;
+
+  /* Contact is the last .footer-col among siblings — full width, centered */
+  .footer-col:last-of-type {
+    grid-column: 1 / -1;
+    text-align: center;
   }
-  .service-card.is-expanded .service-overlay p {
-    color: rgba(255,255,255,0.85) !important;
+  .footer-col:last-of-type p {
+    margin-left: auto;
+    margin-right: auto;
   }
 }

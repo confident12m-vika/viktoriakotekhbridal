@@ -60,7 +60,7 @@ function Footer() {
 
         <div className="footer-col">
           <h4>Contact</h4>
-          <p>📞 +20 155 540 5699</p>
+          <p>📞 +20 155 883 1957</p>
           <p>✉️ info@viktoriakotekh.com</p>
           <p>📍 Cairo, Egypt</p>
           <p>✈️ Madrid, Spain</p>
