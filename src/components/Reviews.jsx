@@ -1,3 +1,5 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+
 const reviews = [
   {
     name: "Sarah M.",
@@ -54,15 +56,56 @@ function Stars({ count }) {
 }
 
 function Reviews() {
+  const [centeredIndex, setCenteredIndex] = useState(null);
+  const trackRef = useRef(null);
+
+  // figures out which card sits closest to the horizontal center of the
+  // scroll track, so it can get the glow/centered treatment on mobile
+  const updateCentered = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const trackRect = track.getBoundingClientRect();
+    const trackCenter = trackRect.left + trackRect.width / 2;
+
+    let closestIndex = null;
+    let closestDist = Infinity;
+    track.querySelectorAll("[data-review-item]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const itemCenter = r.left + r.width / 2;
+      const dist = Math.abs(itemCenter - trackCenter);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestIndex = Number(el.dataset.reviewItem);
+      }
+    });
+    setCenteredIndex(closestIndex);
+  }, []);
+
+  useEffect(() => {
+    updateCentered();
+    const track = trackRef.current;
+    if (!track) return;
+    track.addEventListener("scroll", updateCentered, { passive: true });
+    window.addEventListener("resize", updateCentered);
+    return () => {
+      track.removeEventListener("scroll", updateCentered);
+      window.removeEventListener("resize", updateCentered);
+    };
+  }, [updateCentered]);
+
   return (
     <section id="reviews" className="reviews reveal">
       <span className="section-label">Testimonials</span>
       <h2 className="section-title">What Our Brides Say</h2>
       <div className="section-line"></div>
 
-      <div className="reviews-grid">
+      <div className="reviews-grid" ref={trackRef}>
         {reviews.map((r, i) => (
-          <div className="review-card" key={i}>
+          <div
+            className={`review-card ${centeredIndex === i ? "is-centered" : ""}`}
+            key={i}
+            data-review-item={i}
+          >
             <Stars count={r.rating} />
             <p className="review-text">"{r.text}"</p>
             <div className="review-footer">

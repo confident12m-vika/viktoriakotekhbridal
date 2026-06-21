@@ -579,3 +579,120 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
   .service-overlay p { -webkit-line-clamp: 2; }
   .gallery-item { width: 170px !important; height: 230px !important; }
 }
+
+/* ══════════════════════════════════════
+   MOBILE-ONLY: Services tap-to-expand-in-place
+   Desktop hover behavior is untouched
+══════════════════════════════════════ */
+@media(max-width: 768px) {
+
+  .service-card {
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .service-card.is-expanded {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    width: min(90vw, 380px);
+    height: min(70vh, 520px);
+    max-height: 520px;
+    z-index: 2000;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,168,76,0.4);
+    border-radius: 2px;
+  }
+
+  .service-card.is-expanded img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* النص يبان كامل ومنظم لما الكارت يتكبر */
+  .service-card.is-expanded .service-overlay {
+    padding: 24px !important;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.15) 100%) !important;
+  }
+
+  .service-card.is-expanded .service-overlay h3 {
+    font-size: 19px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.35;
+  }
+
+  .service-card.is-expanded .service-overlay p {
+    font-size: 13px !important;
+    line-height: 1.7 !important;
+    -webkit-line-clamp: unset !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .service-card.is-expanded .service-num {
+    font-size: 34px !important;
+  }
+
+  .service-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+  }
+}
+
+/* ══════════════════════════════════════
+   MOBILE-ONLY: Reviews horizontal-scroll glow (same pattern as Gallery)
+   Desktop grid (3-column) stays exactly as before
+══════════════════════════════════════ */
+@media(max-width: 768px) {
+
+  .reviews-grid {
+    display: flex !important;
+    grid-template-columns: unset !important;
+    gap: 14px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: x mandatory !important;
+    scroll-padding: 0 20px !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 10px 20px 26px !important;
+    margin: 50px auto 0 !important;
+  }
+  .reviews-grid::-webkit-scrollbar { height: 3px; }
+  .reviews-grid::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.35); }
+
+  .review-card {
+    flex: 0 0 auto !important;
+    width: 260px !important;
+    scroll-snap-align: center !important;
+    display: flex;
+    flex-direction: column;
+    opacity: 0.5;
+    transform: scale(0.92);
+    filter: brightness(0.7);
+    transition: transform 0.35s ease, opacity 0.35s ease, filter 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .review-card.is-centered {
+    opacity: 1;
+    transform: scale(1.04);
+    filter: brightness(1);
+    box-shadow: 0 0 36px rgba(201,168,76,0.45), 0 0 0 1px rgba(201,168,76,0.5);
+  }
+}
+
+@media(max-width: 420px) {
+  .review-card { width: 230px !important; }
+}

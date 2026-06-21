@@ -1,3 +1,5 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+
 const services = [
   {
     img: "/images/service1.webp",
@@ -38,14 +40,68 @@ const services = [
 ];
 
 function Services() {
+  // index of the currently-expanded card on mobile (null = none expanded)
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const containerRef = useRef(null);
+
+  const isMobile = useCallback(() => window.innerWidth <= 768, []);
+
+  const handleCardClick = (i) => {
+    if (!isMobile()) return; // desktop keeps its normal hover behavior untouched
+    setExpandedIndex((prev) => (prev === i ? null : i));
+  };
+
+  const closeExpanded = useCallback(() => setExpandedIndex(null), []);
+
+  // tapping/clicking anywhere outside the expanded card collapses it back
+  useEffect(() => {
+    if (expandedIndex === null) return;
+
+    const handleOutside = (e) => {
+      const expandedEl = containerRef.current?.querySelector(
+        `.service-card[data-index="${expandedIndex}"]`
+      );
+      if (expandedEl && !expandedEl.contains(e.target)) {
+        closeExpanded();
+      }
+    };
+
+    document.addEventListener("touchstart", handleOutside, { passive: true });
+    document.addEventListener("mousedown", handleOutside);
+    return () => {
+      document.removeEventListener("touchstart", handleOutside);
+      document.removeEventListener("mousedown", handleOutside);
+    };
+  }, [expandedIndex, closeExpanded]);
+
+  // collapse automatically if the viewport grows back into desktop size
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isMobile()) setExpandedIndex(null);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMobile]);
+
+  // lock background scroll while a card is expanded on mobile
+  useEffect(() => {
+    document.body.style.overflow = expandedIndex !== null ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [expandedIndex]);
+
   return (
     <section id="services" className="services reveal">
       <span className="section-label">What We Offer</span>
       <h2 className="section-title">Our Services</h2>
       <div className="section-line"></div>
-      <div className="services-container">
+      <div className="services-container" ref={containerRef}>
         {services.map((s, i) => (
-          <div className="service-card" key={i}>
+          <div
+            className={`service-card ${expandedIndex === i ? "is-expanded" : ""}`}
+            data-index={i}
+            key={i}
+            onClick={() => handleCardClick(i)}
+          >
             <img src={s.img} alt={s.title} loading="lazy" />
             <div className="service-overlay">
               <div>
@@ -54,6 +110,16 @@ function Services() {
               </div>
             </div>
             <span className="service-num">{s.num}</span>
+
+            {expandedIndex === i && (
+              <button
+                className="service-close-btn"
+                onClick={(e) => { e.stopPropagation(); closeExpanded(); }}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            )}
           </div>
         ))}
       </div>
