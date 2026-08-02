@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// يدعم رابط Cloudinary الكامل (https://...) والروابط النسبية القديمة (/uploads/...)
 const imgUrl = (path) => {
   if (!path) return '';
   return path.startsWith('http') ? path : `${API}${path}`;
@@ -13,7 +12,7 @@ const S = {
   header:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 40px',borderBottom:'1px solid rgba(201,168,76,0.2)',flexWrap:'wrap',gap:'10px'},
   title:{fontFamily:"'Cormorant Garamond',serif",color:'#c9a84c',fontSize:'20px',letterSpacing:'3px'},
   sub:{color:'rgba(255,255,255,0.35)',fontSize:'11px',letterSpacing:'2px',marginTop:'3px'},
-  tabs:{display:'flex',gap:'4px',padding:'20px 40px 0'},
+  tabs:{display:'flex',gap:'4px',padding:'20px 40px 0',flexWrap:'wrap'},
   tab:{padding:'10px 24px',background:'transparent',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.45)',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:'11px',letterSpacing:'2px',transition:'0.3s'},
   tabActive:{borderColor:'#c9a84c',color:'#c9a84c'},
   body:{padding:'30px 40px'},
@@ -23,7 +22,6 @@ const S = {
   fBtnA:{borderColor:'#c9a84c',color:'#c9a84c'},
   grid:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'12px'},
   card:{background:'#111',border:'1px solid #1a1a1a',cursor:'pointer',transition:'border-color 0.3s',overflow:'hidden'},
-  cardHover:{borderColor:'rgba(201,168,76,0.4)'},
   imgBox:{height:'160px',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'},
   imgEl:{width:'100%',height:'100%',objectFit:'cover'},
   avatar:{fontSize:'2.5rem',opacity:0.3},
@@ -44,7 +42,6 @@ const S = {
   modalMsg:{color:'rgba(255,255,255,0.7)',fontStyle:'italic',margin:'16px 0',padding:'16px',background:'rgba(255,255,255,0.03)',fontSize:'13px',lineHeight:'1.7',textAlign:'left'},
   delBtn:{marginTop:'12px',background:'transparent',border:'1px solid #e74c3c',color:'#e74c3c',padding:'10px 24px',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:'11px',letterSpacing:'1px'},
   logoutBtn:{background:'transparent',border:'1px solid rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)',padding:'8px 20px',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:'11px',letterSpacing:'1px',transition:'0.3s'},
-  // Gallery
   galleryGrid:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'8px'},
   galleryCard:{position:'relative',overflow:'hidden',background:'#111',aspectRatio:'1'},
   galleryImg:{width:'100%',height:'100%',objectFit:'cover'},
@@ -62,10 +59,7 @@ function Login({ onLogin }) {
   async function submit(e) {
     e.preventDefault(); setLoading(true); setErr('');
     try {
-      const res = await fetch(`${API}/api/admin/login`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(c),
-      });
+      const res = await fetch(`${API}/api/admin/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(c) });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message);
       localStorage.setItem('adminToken', j.token);
@@ -167,24 +161,17 @@ function Clients({ token, onLogout }) {
       {imgLightbox && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.97)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000}} onClick={() => setImgLightbox(null)}>
           <button style={{position:'absolute',top:'20px',left:'24px',background:'none',border:'1px solid rgba(255,255,255,0.2)',color:'white',padding:'8px 18px',cursor:'pointer',fontSize:'12px',letterSpacing:'2px'}} onClick={() => setImgLightbox(null)}>Back</button>
-          <button style={{position:'absolute',top:'20px',right:'24px',background:'none',border:'none',color:'white',fontSize:'28px',cursor:'pointer'}} onClick={() => setImgLightbox(null)}>X</button>
+          <button style={{position:'absolute',top:'20px',right:'24px',background:'none',border:'none',color:'white',fontSize:'28px',cursor:'pointer'}} onClick={() => setImgLightbox(null)}>✕</button>
           <img src={imgLightbox} style={{maxWidth:'95vw',maxHeight:'92vh',objectFit:'contain'}} onClick={e => e.stopPropagation()} alt="" />
         </div>
       )}
-
       {selected && (
         <div style={S.overlay} onClick={()=>setSelected(null)}>
           <div style={S.modal} onClick={e=>e.stopPropagation()}>
             <button style={S.closeBtn} onClick={()=>setSelected(null)}>✕</button>
             {selected.image && (
               <div style={{position:"relative"}}>
-                <img
-                  src={imgUrl(selected.image)}
-                  alt=""
-                  style={S.modalImg}
-                  onClick={() => setImgLightbox(imgUrl(selected.image))}
-                  title="Click to view full size"
-                />
+                <img src={imgUrl(selected.image)} alt="" style={S.modalImg} onClick={() => setImgLightbox(imgUrl(selected.image))} title="Click to view full size" />
                 <span style={{fontSize:'10px',color:'rgba(255,255,255,0.3)',letterSpacing:'1px'}}>Click image to enlarge</span>
               </div>
             )}
@@ -241,24 +228,14 @@ function GalleryAdmin({ token }) {
         onClick={()=>document.getElementById('gal-input').click()}>
         {file
           ? <p style={{color:'#c9a84c',fontSize:'13px'}}>{file.name}</p>
-          : <>
-              <p style={{fontSize:'28px',marginBottom:'8px'}}>+</p>
-              <p style={{fontSize:'11px',letterSpacing:'2px'}}>Click to upload image to gallery</p>
-            </>
+          : <><p style={{fontSize:'28px',marginBottom:'8px'}}>+</p><p style={{fontSize:'11px',letterSpacing:'2px'}}>Click to upload image to gallery</p></>
         }
         <input id="gal-input" type="file" accept="image/*" hidden onChange={e=>setFile(e.target.files[0])} />
       </div>
       {file && (
         <div style={{display:'flex',gap:'10px',marginBottom:'20px',flexWrap:'wrap'}}>
-          <input
-            style={{...S.search,flex:1}}
-            placeholder="Caption (optional)"
-            value={caption}
-            onChange={e=>setCaption(e.target.value)}
-          />
-          <button style={S.uploadBtn} onClick={upload} disabled={uploading}>
-            {uploading ? 'Uploading...' : 'Upload to Gallery'}
-          </button>
+          <input style={{...S.search,flex:1}} placeholder="Caption (optional)" value={caption} onChange={e=>setCaption(e.target.value)} />
+          <button style={S.uploadBtn} onClick={upload} disabled={uploading}>{uploading ? 'Uploading...' : 'Upload to Gallery'}</button>
         </div>
       )}
       <div style={S.galleryGrid}>
@@ -274,7 +251,100 @@ function GalleryAdmin({ token }) {
   );
 }
 
-// ── Main ─────────────────────────────────────────────────────
+// ── Services Images Tab ──────────────────────────────────────
+const SERVICES_LABELS = [
+  "01 — Custom Bridal Design",
+  "02 — Evening & Occasion Wear",
+  "03 — Expert Alterations",
+  "04 — Express Wedding Dress Rescue",
+  "05 — Bridal Transformation",
+  "06 — International Bridal Service",
+];
+
+const FALLBACK_IMGS = [
+  "/images/service1.webp", "/images/service2.jpg",
+  "/images/service1.webp", "/images/service2.jpg",
+  "/images/service1.webp", "/images/service2.jpg",
+];
+
+function ServicesAdmin({ token }) {
+  const [serviceImgs, setServiceImgs] = useState({});
+  const [uploading, setUploading] = useState(null); // index being uploaded
+
+  const loadImgs = useCallback(async () => {
+    const res = await fetch(`${API}/api/admin/services`, { headers:{ Authorization:`Bearer ${token}` } });
+    const data = await res.json();
+    const map = {};
+    data.forEach(item => { map[item.serviceIndex] = item.imageUrl; });
+    setServiceImgs(map);
+  }, [token]);
+
+  useEffect(() => { loadImgs(); }, [loadImgs]);
+
+  async function uploadForService(index, file) {
+    if (!file) return;
+    setUploading(index);
+    const fd = new FormData();
+    fd.append('image', file);
+    await fetch(`${API}/api/admin/services/${index}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    setUploading(null);
+    loadImgs();
+  }
+
+  return (
+    <div>
+      <p style={{color:'rgba(255,255,255,0.35)',fontSize:'12px',letterSpacing:'1px',marginBottom:'28px'}}>
+        Click on any service card to replace its image. Changes appear on the website immediately.
+      </p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'16px'}}>
+        {SERVICES_LABELS.map((label, i) => {
+          const index = i + 1;
+          const imgSrc = serviceImgs[index] || FALLBACK_IMGS[i];
+          const isUploading = uploading === index;
+          return (
+            <div key={index} style={{background:'#111',border:'1px solid rgba(201,168,76,0.15)',overflow:'hidden',position:'relative'}}>
+              {/* صورة الخدمة الحالية */}
+              <div style={{height:'180px',overflow:'hidden',position:'relative'}}>
+                <img src={imgSrc} alt={label} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                {/* overlay عند الرفع */}
+                {isUploading && (
+                  <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.7)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <span style={{color:'#c9a84c',fontSize:'13px',letterSpacing:'2px'}}>Uploading...</span>
+                  </div>
+                )}
+              </div>
+              {/* اسم الخدمة */}
+              <div style={{padding:'12px 14px 14px'}}>
+                <p style={{color:'rgba(255,255,255,0.7)',fontSize:'12px',letterSpacing:'1px',marginBottom:'10px'}}>{label}</p>
+                {/* زرار رفع صورة جديدة */}
+                <label style={{display:'block',padding:'10px',border:'1px dashed rgba(201,168,76,0.4)',color:'#c9a84c',fontSize:'11px',letterSpacing:'1px',textAlign:'center',cursor:'pointer',transition:'0.3s'}}>
+                  {isUploading ? 'Uploading...' : '📷 Change Image'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    disabled={isUploading}
+                    onChange={e => {
+                      const f = e.target.files[0];
+                      if (f) uploadForService(index, f);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
 function Dashboard({ token, onLogout }) {
   const [tab, setTab] = useState('clients');
   return (
@@ -287,15 +357,20 @@ function Dashboard({ token, onLogout }) {
         <button style={S.logoutBtn} onClick={onLogout}>Logout</button>
       </div>
       <div style={S.tabs}>
-        {['clients','gallery'].map(t=>(
-          <button key={t} style={{...S.tab,...(tab===t?S.tabActive:{})}} onClick={()=>setTab(t)}>
-            {t === 'clients' ? '📋 Requests' : '🖼 Gallery'}
+        {[
+          { key:'clients',  label:'📋 Requests' },
+          { key:'gallery',  label:'🖼 Gallery' },
+          { key:'services', label:'✂️ Services' },
+        ].map(t=>(
+          <button key={t.key} style={{...S.tab,...(tab===t.key?S.tabActive:{})}} onClick={()=>setTab(t.key)}>
+            {t.label}
           </button>
         ))}
       </div>
       <div style={S.body}>
-        {tab === 'clients' && <Clients token={token} onLogout={onLogout} />}
-        {tab === 'gallery' && <GalleryAdmin token={token} />}
+        {tab === 'clients'  && <Clients token={token} onLogout={onLogout} />}
+        {tab === 'gallery'  && <GalleryAdmin token={token} />}
+        {tab === 'services' && <ServicesAdmin token={token} />}
       </div>
     </div>
   );
