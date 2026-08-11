@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useTranslation, LangSwitcher } from "../i18n/useTranslation";
+import { useTranslation, LangSwitcher, LangSwitcherMobile } from "../i18n/useTranslation";
 
 function Navbar() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]       = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { t, lang, setLang } = useTranslation();
+  const { t, lang, setLang }  = useTranslation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -22,6 +22,8 @@ function Navbar() {
   return (
     <>
       <nav className={`navbar ${scrolled ? "scrolled" : ""}`}>
+
+        {/* اللوجو */}
         <div className="nav-logo">
           <a href="#" onClick={close}>
             <img src="/images/logo.jpg" alt="Viktoria Kotekh" />
@@ -32,18 +34,31 @@ function Navbar() {
           </a>
         </div>
 
+        {/* القايمة — ديسكتوب */}
         <div className={`nav-links ${open ? "active" : ""}`}>
-          <a href="#story"   onClick={close}>{t('nav_story')}</a>
+          <a href="#story"    onClick={close}>{t('nav_story')}</a>
           <a href="#services" onClick={close}>{t('nav_services')}</a>
-          <a href="#gallery" onClick={close}>{t('nav_gallery')}</a>
-          <a href="#reviews" onClick={close}>{t('nav_reviews')}</a>
-          <a href="/blog"    onClick={close}>{t('nav_journal')}</a>
-          <a href="#contact" onClick={close}>{t('nav_contact')}</a>
-          <a href="#booking" onClick={close} className="nav-cta">{t('nav_book')}</a>
+          <a href="#gallery"  onClick={close}>{t('nav_gallery')}</a>
+          <a href="#reviews"  onClick={close}>{t('nav_reviews')}</a>
+          <a href="/blog"     onClick={close}>{t('nav_journal')}</a>
+          <a href="#contact"  onClick={close}>{t('nav_contact')}</a>
+          <a href="#booking"  onClick={close} className="nav-cta">{t('nav_book')}</a>
+
+          {/* تغيير اللغة — داخل القائمة الجانبية على الموبايل فقط */}
+          <div className="lang-mobile-slot">
+            <LangSwitcherMobile lang={lang} setLang={setLang} onClose={close} />
+          </div>
         </div>
 
-        <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
-          <LangSwitcher lang={lang} setLang={setLang} />
+        {/* يمين النافبار: كرة أرضية + هامبرغر */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
+          {/* كرة أرضية — تظهر على الديسكتوب فقط */}
+          <div className="lang-desktop-slot">
+            <LangSwitcher lang={lang} setLang={setLang} />
+          </div>
+
+          {/* زرار الهامبرغر */}
           <button
             className={`menu-toggle ${open ? "open" : ""}`}
             onClick={() => setOpen(o => !o)}

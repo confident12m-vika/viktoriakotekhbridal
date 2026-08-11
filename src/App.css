@@ -751,3 +751,14 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
     margin-right: auto;
   }
 }
+
+/* ══ LANG SWITCHER ══ */
+/* الديسكتوب: الكرة الأرضية ظاهرة، الموبايل مخفي */
+.lang-desktop-slot { display: flex; }
+.lang-mobile-slot  { display: none; }
+
+@media(max-width: 768px) {
+  /* الموبايل: الكرة الأرضية مخفية، داخل القائمة ظاهر */
+  .lang-desktop-slot { display: none !important; }
+  .lang-mobile-slot  { display: block; width: 100%; }
+}
