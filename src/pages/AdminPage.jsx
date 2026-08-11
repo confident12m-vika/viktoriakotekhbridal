@@ -287,6 +287,87 @@ function GalleryAdmin({ token }) {
   );
 }
 
+
+const SERVICES_LABELS = [
+  "01 — Custom Bridal Design",
+  "02 — Evening & Occasion Wear",
+  "03 — Expert Alterations",
+  "04 — Express Wedding Dress Rescue",
+  "05 — Bridal Transformation",
+  "06 — International Bridal Service",
+];
+const SVC_FALLBACK = [
+  "/images/service1.webp","/images/service2.jpg",
+  "/images/service1.webp","/images/service2.jpg",
+  "/images/service1.webp","/images/service2.jpg",
+];
+
+function ServicesAdmin({ token }) {
+  const [serviceImgs, setServiceImgs] = useState({});
+  const [uploading, setUploading] = useState(null);
+
+  const loadImgs = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/api/admin/services`, { headers:{ Authorization:`Bearer ${token}` } });
+      const data = await res.json();
+      const map = {};
+      data.forEach(item => { map[item.serviceIndex] = item.imageUrl; });
+      setServiceImgs(map);
+    } catch {}
+  }, [token]);
+
+  useEffect(() => { loadImgs(); }, [loadImgs]);
+
+  async function uploadForService(index, file) {
+    if (!file) return;
+    setUploading(index);
+    const fd = new FormData();
+    fd.append('image', file);
+    await fetch(`${API}/api/admin/services/${index}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    setUploading(null);
+    loadImgs();
+  }
+
+  return (
+    <div>
+      <p style={{color:'rgba(255,255,255,0.35)',fontSize:'12px',letterSpacing:'1px',marginBottom:'28px'}}>
+        Click "Change Image" on any service to update its photo. Changes appear on the website immediately.
+      </p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'16px'}}>
+        {SERVICES_LABELS.map((label, i) => {
+          const index = i + 1;
+          const imgSrc = serviceImgs[index] || SVC_FALLBACK[i];
+          const isUp = uploading === index;
+          return (
+            <div key={index} style={{background:'#111',border:'1px solid rgba(201,168,76,0.15)',overflow:'hidden'}}>
+              <div style={{height:'180px',overflow:'hidden',position:'relative'}}>
+                <img src={imgSrc} alt={label} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                {isUp && (
+                  <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.7)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <span style={{color:'#c9a84c',fontSize:'13px',letterSpacing:'2px'}}>Uploading...</span>
+                  </div>
+                )}
+              </div>
+              <div style={{padding:'12px 14px 14px'}}>
+                <p style={{color:'rgba(255,255,255,0.7)',fontSize:'12px',letterSpacing:'1px',marginBottom:'10px'}}>{label}</p>
+                <label style={{display:'block',padding:'10px',border:'1px dashed rgba(201,168,76,0.4)',color:'#c9a84c',fontSize:'11px',letterSpacing:'1px',textAlign:'center',cursor:'pointer'}}>
+                  {isUp ? 'Uploading...' : '📷 Change Image'}
+                  <input type="file" accept="image/*" hidden disabled={isUp}
+                    onChange={e => { const f=e.target.files[0]; if(f) uploadForService(index,f); e.target.value=''; }} />
+                </label>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main ─────────────────────────────────────────────────────
 function Dashboard({ token, onLogout }) {
   const [tab, setTab] = useState('clients');
@@ -300,15 +381,20 @@ function Dashboard({ token, onLogout }) {
         <button style={S.logoutBtn} onClick={onLogout}>Logout</button>
       </div>
       <div style={S.tabs}>
-        {['clients','gallery'].map(t=>(
-          <button key={t} style={{...S.tab,...(tab===t?S.tabActive:{})}} onClick={()=>setTab(t)}>
-            {t === 'clients' ? '📋 Requests' : '🖼 Gallery'}
+        {[
+          {key:'clients',  label:'📋 Requests'},
+          {key:'gallery',  label:'🖼 Gallery'},
+          {key:'services', label:'✂️ Services'},
+        ].map(t=>(
+          <button key={t.key} style={{...S.tab,...(tab===t.key?S.tabActive:{})}} onClick={()=>setTab(t.key)}>
+            {t.label}
           </button>
         ))}
       </div>
       <div style={S.body}>
         {tab === 'clients' && <Clients token={token} onLogout={onLogout} />}
         {tab === 'gallery' && <GalleryAdmin token={token} />}
+        {tab === 'services' && <ServicesAdmin token={token} />}
       </div>
     </div>
   );
