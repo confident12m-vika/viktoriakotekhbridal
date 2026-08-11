@@ -1,4 +1,4 @@
-import { useTranslation } from "../i18n/useTranslation";
+import { useTranslation } from "../i18n/useTranslation.jsx";
 
 function Hero() {
   const { t } = useTranslation();

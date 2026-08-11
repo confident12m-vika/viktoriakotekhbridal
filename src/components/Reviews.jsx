@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useTranslation } from "../i18n/useTranslation";
+import { useTranslation } from "../i18n/useTranslation.jsx";
 
 const reviews = [
   { name: "Sarah M.",    country: "🇪🇬 Cairo, Egypt",     rating: 5, text: "Viktoria created the most breathtaking gown I've ever seen. Every detail was perfect — she truly understood my vision.", date: "March 2026" },

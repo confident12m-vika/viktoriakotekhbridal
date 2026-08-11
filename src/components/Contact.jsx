@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslation } from "../i18n/useTranslation";
+import { useTranslation } from "../i18n/useTranslation.jsx";
 
 function Contact() {
   const { t } = useTranslation();

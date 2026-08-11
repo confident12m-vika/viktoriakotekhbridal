@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useTranslation, LangSwitcher, LangSwitcherMobile } from "../i18n/useTranslation";
+import { useTranslation, LangSwitcher, LangSwitcherMobile } from "../i18n/useTranslation.jsx";
 
 function Navbar() {
   const [open, setOpen]       = useState(false);

@@ -1,4 +1,4 @@
-import { useTranslation } from "../i18n/useTranslation";
+import { useTranslation } from "../i18n/useTranslation.jsx";
 
 const SOCIALS = [
   { icon: "fa-brands fa-instagram", label: "Instagram", url: "https://instagram.com" },
