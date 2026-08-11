@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useTranslation } from "../i18n/useTranslation";
 
 function Contact() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name:"", email:"", message:"" });
   const [sent, setSent] = useState(false);
 
@@ -15,34 +17,21 @@ function Contact() {
     <section id="contact" className="contact reveal">
       <div className="contact-container">
         <div className="contact-info">
-          <span className="section-label">Get in Touch</span>
-          <h2 className="section-title">Let's Start<br />a Conversation</h2>
+          <span className="section-label">{t('contact_label')}</span>
+          <h2 className="section-title">{t('contact_title')}</h2>
           <div className="section-line left"></div>
-          <p>
-            Whether you're dreaming of a wedding gown, need expert alterations,
-            or simply want to explore what's possible — Viktoria is here to listen.
-            Every great creation begins with a single conversation.
-          </p>
+          <p>{t('contact_desc')}</p>
           <div className="contact-item">
             <div className="contact-icon"><i className="fa-solid fa-phone"></i></div>
-            <div>
-              <h4>Phone & WhatsApp</h4>
-              <p>+20 155 883 1957</p>
-            </div>
+            <div><h4>{t('contact_phone')}</h4><p>+20 155 883 1957</p></div>
           </div>
           <div className="contact-item">
             <div className="contact-icon"><i className="fa-solid fa-envelope"></i></div>
-            <div>
-              <h4>Email</h4>
-              <p>viktoriakotekhbridal@gmail.com</p>
-            </div>
+            <div><h4>{t('contact_email')}</h4><p>viktoriakotekhbridal@gmail.com</p></div>
           </div>
           <div className="contact-item">
             <div className="contact-icon"><i className="fa-solid fa-location-dot"></i></div>
-            <div>
-              <h4>Location</h4>
-              <p>Cairo, Egypt · Madrid, Spain</p>
-            </div>
+            <div><h4>{t('contact_location')}</h4><p>Cairo, Egypt · Madrid, Spain</p></div>
           </div>
           <div className="contact-social">
             <a href="#" className="social-link" aria-label="Instagram"><i className="fa-brands fa-instagram"></i></a>
@@ -56,14 +45,14 @@ function Contact() {
           <span className="section-label" style={{marginBottom:"24px",display:"block"}}>Quick Message</span>
           {sent ? (
             <p style={{color:"#c9a84c",fontSize:"14px",lineHeight:"1.8",padding:"20px 0"}}>
-              ✓ Message received. We'll be in touch soon.
+              ✓ {t('booking_success_msg')}
             </p>
           ) : (
             <form onSubmit={handleSubmit}>
-              <input placeholder="Your Name *" value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} required />
-              <input type="email" placeholder="Email Address *" value={form.email} onChange={e => setForm(f=>({...f,email:e.target.value}))} required />
-              <textarea placeholder="Your message..." value={form.message} onChange={e => setForm(f=>({...f,message:e.target.value}))} required />
-              <button type="submit" className="contact-btn">Send Message</button>
+              <input placeholder={t('contact_form_name') + ' *'} value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} required />
+              <input type="email" placeholder={t('contact_form_email') + ' *'} value={form.email} onChange={e => setForm(f=>({...f,email:e.target.value}))} required />
+              <textarea placeholder={t('contact_form_msg')} value={form.message} onChange={e => setForm(f=>({...f,message:e.target.value}))} required />
+              <button type="submit" className="contact-btn">{t('contact_form_btn')}</button>
             </form>
           )}
         </div>
