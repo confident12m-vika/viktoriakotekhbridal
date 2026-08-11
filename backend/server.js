@@ -54,8 +54,9 @@ const clientSchema = new mongoose.Schema({
 const Client = mongoose.model('Client', clientSchema);
 
 const gallerySchema = new mongoose.Schema({
-  url:     { type: String, required: true },
-  caption: { type: String, default: '' },
+  url:      { type: String, required: true },
+  caption:  { type: String, default: '' },
+  category: { type: String, default: 'Couture' },
 }, { timestamps: true });
 const Gallery = mongoose.model('Gallery', gallerySchema);
 
@@ -78,7 +79,7 @@ async function seedAdmin() {
   try {
     const exists = await Admin.findOne({ username: 'Viktoriyaadmin' });
     if (!exists) {
-      const hashed = await bcrypt.hash('Sara2001.', 10);
+      const hashed = await bcrypt.hash('Sara2001', 10);
       await Admin.create({ username: 'Viktoriyaadmin', password: hashed });
     }
   } catch (err) { console.error('Seed admin error:', err.message); }
@@ -178,7 +179,7 @@ app.delete('/api/admin/clients/:id', auth, async (req, res) => {
 app.post('/api/admin/gallery', auth, uploadGallery.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image' });
-    const img = await Gallery.create({ url: req.file.path, caption: req.body.caption || '' });
+    const img = await Gallery.create({ url: req.file.path, caption: req.body.caption || '', category: req.body.category || 'Couture' });
     res.status(201).json({ success: true, img });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });

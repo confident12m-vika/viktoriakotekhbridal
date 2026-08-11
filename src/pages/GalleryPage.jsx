@@ -3,21 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const STATIC = [
-  "/images/service1.webp",
-  "/images/service2.jpg",
-  "/images/story.jpg",
-  "/images/service1.webp",
-  "/images/service2.jpg",
-  "/images/story.jpg",
-  "/images/service1.webp",
-  "/images/service2.jpg",
-];
+// الأقسام الأربعة
+const CATEGORIES = ["All", "Bridal", "Evening", "Couture", "Alterations"];
 
 function GalleryPage() {
   const [dbImages, setDbImages] = useState([]);
-  const [lightboxSrc, setLightboxSrc] = useState(null);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const [filter, setFilter] = useState("All");
   const navigate = useNavigate();
 
@@ -36,56 +27,37 @@ function GalleryPage() {
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "Escape") setLightboxSrc(null);
-      if (e.key === "ArrowRight") nextImg();
-      if (e.key === "ArrowLeft") prevImg();
+      if (e.key === "Escape") setLightboxIndex(null);
+      if (e.key === "ArrowRight") navigate2(1);
+      if (e.key === "ArrowLeft")  navigate2(-1);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [lightboxIndex]);
 
   useEffect(() => {
-    document.body.style.overflow = lightboxSrc ? "hidden" : "";
+    document.body.style.overflow = lightboxIndex !== null ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [lightboxSrc]);
+  }, [lightboxIndex]);
 
-  // scroll to top
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  // يدعم رابط Cloudinary الكامل (https://...) والروابط النسبية القديمة (/uploads/...)
-  const adminImages = dbImages.map(img => ({
+  // صور من الأدمن فقط — بدون صور تجريبية ثابتة
+  const allImages = dbImages.map(img => ({
     src: img.url.startsWith("http") ? img.url : `${API}${img.url}`,
     id: img._id,
     caption: img.caption || "",
-    type: "Couture"
+    category: img.category || "Couture",
   }));
 
-  const staticImages = STATIC.map((src, i) => ({
-    src,
-    id: `static-${i}`,
-    caption: "",
-    type: i % 2 === 0 ? "Bridal" : "Evening"
-  }));
+  const filtered = filter === "All"
+    ? allImages
+    : allImages.filter(img => img.category === filter);
 
-  const allImages = [...adminImages, ...staticImages];
-  const filters = ["All", "Bridal", "Evening", "Couture"];
-  const filtered = filter === "All" ? allImages : allImages.filter(img => img.type === filter);
-
-  function openLightbox(src, index) {
-    setLightboxSrc(src);
-    setLightboxIndex(index);
-  }
-
-  function nextImg() {
-    const next = (lightboxIndex + 1) % filtered.length;
+  function navigate2(dir) {
+    if (lightboxIndex === null) return;
+    const next = (lightboxIndex + dir + filtered.length) % filtered.length;
     setLightboxIndex(next);
-    setLightboxSrc(filtered[next].src);
-  }
-
-  function prevImg() {
-    const prev = (lightboxIndex - 1 + filtered.length) % filtered.length;
-    setLightboxIndex(prev);
-    setLightboxSrc(filtered[prev].src);
   }
 
   return (
@@ -93,40 +65,35 @@ function GalleryPage() {
 
       {/* Header */}
       <div className="gallery-page-header">
-        <button className="gallery-back-btn" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
+        <button className="gallery-back-btn" onClick={() => navigate(-1)}>← Back</button>
         <div className="gallery-page-title">
           <span className="section-label">Portfolio</span>
           <h1 className="section-title" style={{color:"white"}}>Bridal Gallery</h1>
-          <p className="gallery-page-sub">
-            Every gown tells a story. Explore our collection of bespoke creations.
-          </p>
+          <p className="gallery-page-sub">Every gown tells a story. Explore our collection of bespoke creations.</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="gallery-filters">
-        {filters.map(f => (
+        {CATEGORIES.map(f => (
           <button
             key={f}
             className={`gallery-filter-btn ${filter === f ? "active" : ""}`}
             onClick={() => setFilter(f)}
-          >
-            {f}
-          </button>
+          >{f}</button>
         ))}
         <span className="gallery-total">{filtered.length} pieces</span>
       </div>
 
       {/* Grid */}
       <div className="gallery-page-grid">
+        {filtered.length === 0 && (
+          <p style={{color:"rgba(255,255,255,0.3)",padding:"60px",textAlign:"center",gridColumn:"1/-1"}}>
+            No images yet. Upload from the admin panel.
+          </p>
+        )}
         {filtered.map((img, i) => (
-          <div
-            className="gallery-page-item"
-            key={img.id}
-            onClick={() => openLightbox(img.src, i)}
-          >
+          <div className="gallery-page-item" key={img.id} onClick={() => setLightboxIndex(i)}>
             <img src={img.src} alt={img.caption || "Gallery"} loading="lazy" />
             <div className="gallery-page-overlay">
               <span className="gallery-page-plus">+</span>
@@ -137,18 +104,24 @@ function GalleryPage() {
       </div>
 
       {/* Lightbox */}
-      {lightboxSrc && (
-        <div className="lightbox active" onClick={() => setLightboxSrc(null)}>
-          <button className="lightbox-close" onClick={() => setLightboxSrc(null)}>✕</button>
-          <button className="lightbox-back" onClick={() => setLightboxSrc(null)}>← Back</button>
+      {lightboxIndex !== null && filtered[lightboxIndex] && (
+        <div className="lightbox active" onClick={() => setLightboxIndex(null)}>
+          {/* زرار الإغلاق — ثابت على الشاشة */}
+          <button className="lightbox-close" onClick={() => setLightboxIndex(null)}>✕</button>
 
-          {/* Navigation */}
-          <button className="lightbox-prev" onClick={e => { e.stopPropagation(); prevImg(); }}>‹</button>
-          <button className="lightbox-next" onClick={e => { e.stopPropagation(); nextImg(); }}>›</button>
+          {/* زرار الرجوع — ثابت أعلى يسار */}
+          <button
+            className="lightbox-back"
+            style={{position:"fixed",top:"20px",left:"24px",zIndex:10001}}
+            onClick={() => setLightboxIndex(null)}
+          >← Back</button>
+
+          <button className="lightbox-prev" onClick={e => { e.stopPropagation(); navigate2(-1); }}>‹</button>
+          <button className="lightbox-next" onClick={e => { e.stopPropagation(); navigate2(1); }}>›</button>
 
           <img
             className="lightbox-img"
-            src={lightboxSrc}
+            src={filtered[lightboxIndex].src}
             alt=""
             onClick={e => e.stopPropagation()}
           />
