@@ -762,3 +762,51 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
   .lang-desktop-slot { display: none !important; }
   .lang-mobile-slot  { display: block; width: 100%; }
 }
+
+/* ══ STORE BUTTON ══ */
+.btn-store {
+  padding: 15px 42px;
+  border: 1px solid #c9a84c;
+  background: rgba(201,168,76,0.08);
+  color: #c9a84c;
+  text-decoration: none;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: var(--transition, 0.4s ease);
+  white-space: nowrap;
+}
+.btn-store:hover {
+  background: #c9a84c;
+  color: #0a0a0a;
+}
+
+/* على الموبايل — الزرار يكون بعرض كامل تحت الاثنين */
+@media(max-width: 768px) {
+  .btn-store {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+}
+
+/* ══ LANG MOBILE GLOBE ══ */
+/* أيقونة الكرة على الموبايل في النافبار */
+.lang-mobile-globe {
+  display: none;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+.lang-desktop-slot { display: flex; }
+.lang-mobile-slot  { display: none; }
+
+@media(max-width: 768px) {
+  .lang-mobile-globe  { display: flex !important; }
+  .lang-desktop-slot  { display: none !important; }
+  .lang-mobile-slot   { display: block; width: 100%; }
+}

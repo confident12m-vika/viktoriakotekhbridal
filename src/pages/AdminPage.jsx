@@ -369,6 +369,115 @@ function ServicesAdmin({ token }) {
 }
 
 // ── Main ─────────────────────────────────────────────────────
+
+// ── Blog Admin Tab ───────────────────────────────────────────
+const BLOG_CATEGORIES = ['Style','Bridal Tips','Alterations','International','Cairo','Culture'];
+
+function BlogAdmin({ token }) {
+  const [posts, setPosts]       = useState([]);
+  const [editing, setEditing]   = useState(null); // null | 'new' | post object
+  const [form, setForm]         = useState({ title:'', subtitle:'', category:'Style', content:'', excerpt:'', published:true, image:null });
+  const [saving, setSaving]     = useState(false);
+  const [imgPreview, setImgPreview] = useState('');
+
+  const loadPosts = async () => {
+    const res = await fetch(`${API}/api/admin/blog`, { headers:{ Authorization:`Bearer ${token}` } });
+    const data = await res.json();
+    setPosts(Array.isArray(data) ? data : []);
+  };
+
+  useEffect(() => { loadPosts(); }, []);
+
+  function openNew() {
+    setForm({ title:'', subtitle:'', category:'Style', content:'', excerpt:'', published:true, image:null });
+    setImgPreview('');
+    setEditing('new');
+  }
+
+  function openEdit(post) {
+    setForm({ title:post.title, subtitle:post.subtitle||'', category:post.category||'Style', content:post.content, excerpt:post.excerpt||'', published:post.published, image:null });
+    setImgPreview(post.image || '');
+    setEditing(post);
+  }
+
+  async function save() {
+    setSaving(true);
+    const fd = new FormData();
+    Object.entries(form).forEach(([k,v]) => { if (v !== null && v !== undefined) fd.append(k, v); });
+    const isNew = editing === 'new';
+    const url = isNew ? `${API}/api/admin/blog` : `${API}/api/admin/blog/${editing._id}`;
+    const method = isNew ? 'POST' : 'PUT';
+    await fetch(url, { method, headers:{ Authorization:`Bearer ${token}` }, body: fd });
+    setSaving(false);
+    setEditing(null);
+    loadPosts();
+  }
+
+  async function del(id) {
+    if (!confirm('Delete this article permanently?')) return;
+    await fetch(`${API}/api/admin/blog/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${token}` } });
+    loadPosts();
+  }
+
+  const inp = {...S.search, marginBottom:'10px', display:'block', width:'100%'};
+  const ta  = {...inp, minHeight:'120px', resize:'vertical', fontFamily:"'Jost',sans-serif"};
+
+  if (editing !== null) return (
+    <div style={{maxWidth:'680px'}}>
+      <h3 style={{color:'#c9a84c',fontSize:'16px',letterSpacing:'2px',marginBottom:'24px'}}>
+        {editing === 'new' ? 'New Article' : 'Edit Article'}
+      </h3>
+      <input style={inp} placeholder="Title *" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} />
+      <input style={inp} placeholder="Subtitle" value={form.subtitle} onChange={e=>setForm(f=>({...f,subtitle:e.target.value}))} />
+      <select style={{...inp,background:'rgba(255,255,255,0.06)',cursor:'pointer'}} value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}>
+        {BLOG_CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+      </select>
+      <textarea style={ta} placeholder="Content *" value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} />
+      <textarea style={{...ta,minHeight:'70px'}} placeholder="Excerpt (short summary)" value={form.excerpt} onChange={e=>setForm(f=>({...f,excerpt:e.target.value}))} />
+      <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'10px'}}>
+        <label style={{color:'rgba(255,255,255,0.5)',fontSize:'12px',display:'flex',alignItems:'center',gap:'6px',cursor:'pointer'}}>
+          <input type="checkbox" checked={form.published} onChange={e=>setForm(f=>({...f,published:e.target.checked}))} />
+          Published
+        </label>
+      </div>
+      <label style={{display:'block',padding:'12px',border:'1px dashed rgba(201,168,76,0.4)',color:'#c9a84c',fontSize:'11px',textAlign:'center',cursor:'pointer',marginBottom:'16px'}}>
+        📷 {form.image ? form.image.name : (imgPreview ? 'Change Image' : 'Add Cover Image')}
+        <input type="file" accept="image/*" hidden onChange={e=>{const f=e.target.files[0];if(f){setForm(p=>({...p,image:f}));setImgPreview(URL.createObjectURL(f));}}} />
+      </label>
+      {imgPreview && <img src={imgPreview} style={{width:'100%',maxHeight:'200px',objectFit:'cover',marginBottom:'16px'}} />}
+      <div style={{display:'flex',gap:'10px'}}>
+        <button style={S.uploadBtn} onClick={save} disabled={saving}>{saving?'Saving...':'Save Article'}</button>
+        <button style={{...S.fBtn,padding:'12px 24px'}} onClick={()=>setEditing(null)}>Cancel</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'24px'}}>
+        <p style={{color:'rgba(255,255,255,0.35)',fontSize:'12px'}}>{posts.length} articles</p>
+        <button style={S.uploadBtn} onClick={openNew}>+ New Article</button>
+      </div>
+      {posts.length === 0 && <p style={S.center}>No articles yet. Create your first one.</p>}
+      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+        {posts.map(post=>(
+          <div key={post._id} style={{background:'#111',border:'1px solid rgba(201,168,76,0.1)',padding:'16px 20px',display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap'}}>
+            {post.image && <img src={post.image.startsWith('http')?post.image:`${API}${post.image}`} style={{width:'70px',height:'50px',objectFit:'cover',flexShrink:0}} />}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{color:'white',fontSize:'14px',fontFamily:"'Cormorant Garamond',serif",marginBottom:'4px'}}>{post.title}</div>
+              <div style={{color:'rgba(255,255,255,0.3)',fontSize:'11px'}}>{post.category} · {new Date(post.createdAt).toLocaleDateString('en-GB')} · {post.published?'✅ Published':'⬜ Draft'}</div>
+            </div>
+            <div style={{display:'flex',gap:'8px'}}>
+              <button style={{...S.fBtn,padding:'6px 14px'}} onClick={()=>openEdit(post)}>Edit</button>
+              <button style={{...S.fBtn,padding:'6px 14px',borderColor:'#e74c3c',color:'#e74c3c'}} onClick={()=>del(post._id)}>Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Dashboard({ token, onLogout }) {
   const [tab, setTab] = useState('clients');
   return (
@@ -395,6 +504,7 @@ function Dashboard({ token, onLogout }) {
         {tab === 'clients' && <Clients token={token} onLogout={onLogout} />}
         {tab === 'gallery' && <GalleryAdmin token={token} />}
         {tab === 'services' && <ServicesAdmin token={token} />}
+        {tab === 'blog' && <BlogAdmin token={token} />}
       </div>
     </div>
   );

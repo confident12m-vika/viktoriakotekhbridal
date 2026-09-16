@@ -1,102 +1,68 @@
-import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { articles } from "../data/blogData";
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function ArticlePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const article = articles.find(a => a.id === id);
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetch(`${API}/api/blog/${id}`)
+      .then(r => r.json())
+      .then(data => { setPost(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [id]);
 
-  if (!article) {
-    return (
-      <div className="article-notfound">
-        <p>Article not found.</p>
-        <button onClick={() => navigate("/blog")}>← Back to Journal</button>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{minHeight:'100vh',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <p style={{color:'rgba(255,255,255,0.3)',letterSpacing:'3px'}}>Loading...</p>
+    </div>
+  );
 
-  // مقالات ذات صلة (باقي المقالات عدا الحالي)
-  const related = articles.filter(a => a.id !== id).slice(0, 3);
+  if (!post || post.message) return (
+    <div className="article-notfound">
+      <p style={{color:'rgba(255,255,255,0.4)',letterSpacing:'2px'}}>Article not found.</p>
+      <button className="gallery-back-btn" onClick={() => navigate('/blog')}>← Back to Journal</button>
+    </div>
+  );
+
+  const imgSrc = post.image ? (post.image.startsWith('http') ? post.image : `${API}${post.image}`) : null;
 
   return (
     <div className="article-page">
-
-      {/* Hero */}
-      <div className="article-hero">
-        <img src={article.image} alt={article.title} className="article-hero-img" />
+      <div className="article-hero" style={imgSrc ? {} : {background:'#0a0a0a',minHeight:'40vh'}}>
+        {imgSrc && <img src={imgSrc} className="article-hero-img" alt={post.title} />}
         <div className="article-hero-overlay"></div>
         <div className="article-hero-content">
-          <button className="gallery-back-btn" onClick={() => navigate("/blog")}>
-            ← Journal
-          </button>
-          <span className="article-category">{article.category}</span>
-          <h1 className="article-title">{article.title}</h1>
-          <p className="article-subtitle">{article.subtitle}</p>
+          <button className="gallery-back-btn" style={{position:'absolute',top:'-120px',left:0}} onClick={() => navigate('/blog')}>← Journal</button>
+          <span className="article-category">{post.category}</span>
+          <h1 className="article-title">{post.title}</h1>
+          {post.subtitle && <p className="article-subtitle">{post.subtitle}</p>}
           <div className="article-meta">
-            <span>{article.date}</span>
-            <span>·</span>
-            <span>{article.readTime}</span>
-            <span>·</span>
-            <span>Viktoria Kotekh</span>
+            <span>{new Date(post.createdAt).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}</span>
           </div>
         </div>
       </div>
 
-      {/* Content */}
       <div className="article-body">
-        <div className="article-lead">{article.excerpt}</div>
-
-        {article.content.map((section, i) => (
-          <div key={i} className="article-section">
-            <h2 className="article-section-heading">{section.heading}</h2>
-            <p className="article-section-body">{section.body}</p>
+        <div className="article-lead">{post.excerpt}</div>
+        <div className="article-section">
+          <div className="article-section-body" style={{whiteSpace:'pre-wrap'}}>
+            {post.content}
           </div>
-        ))}
+        </div>
 
-        {/* CTA */}
         <div className="article-cta">
-          <span className="section-label">Ready to Begin?</span>
-          <h3>Book Your Consultation with Viktoria</h3>
-          <p>Every dream gown starts with a conversation. We'd love to hear your story.</p>
-          <button className="btn-gold" onClick={() => navigate("/#booking")}>
-            Book a Fitting
-          </button>
+          <span className="section-label">Book Your Fitting</span>
+          <h3>Ready to Begin Your Journey?</h3>
+          <p>Let Viktoria create your dream gown — in Cairo or internationally.</p>
+          <a href="/#booking" className="btn-gold" style={{display:'inline-block',marginTop:'8px'}}>Start Your Project</a>
         </div>
       </div>
-
-      {/* Related Articles */}
-      <div className="article-related">
-        <div className="article-related-inner">
-          <h3 className="article-related-title">Continue Reading</h3>
-          <div className="blog-grid blog-grid-small">
-            {related.map(a => (
-              <div
-                key={a.id}
-                className="blog-card"
-                onClick={() => { navigate(`/blog/${a.id}`); window.scrollTo(0,0); }}
-              >
-                <div className="blog-card-img">
-                  <img src={a.image} alt={a.title} loading="lazy" />
-                  <span className="blog-card-category">{a.category}</span>
-                </div>
-                <div className="blog-card-body">
-                  <div className="blog-card-meta">
-                    <span>{a.date}</span>
-                    <span>·</span>
-                    <span>{a.readTime}</span>
-                  </div>
-                  <h2 className="blog-card-title">{a.title}</h2>
-                  <span className="blog-card-read">Read Article →</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }

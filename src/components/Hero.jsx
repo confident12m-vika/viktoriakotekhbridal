@@ -15,6 +15,15 @@ function Hero() {
         <div className="hero-btns">
           <a href="#booking" className="btn-gold">{t('hero_btn1')}</a>
           <a href="#Viewcollection" className="btn-outline">{t('hero_btn2')}</a>
+          {/* زرار المتجر الأونلاين */}
+          <a
+            href="https://viktoriakotekhbridal.online"
+            className="btn-store"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('hero_btn_store')}
+          </a>
         </div>
       </div>
       <div className="hero-scroll">
