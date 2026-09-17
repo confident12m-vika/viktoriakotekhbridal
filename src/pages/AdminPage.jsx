@@ -494,6 +494,7 @@ function Dashboard({ token, onLogout }) {
           {key:'clients',  label:'📋 Requests'},
           {key:'gallery',  label:'🖼 Gallery'},
           {key:'services', label:'✂️ Services'},
+          {key:'blog',     label:'📝 Journal'},
         ].map(t=>(
           <button key={t.key} style={{...S.tab,...(tab===t.key?S.tabActive:{})}} onClick={()=>setTab(t.key)}>
             {t.label}
