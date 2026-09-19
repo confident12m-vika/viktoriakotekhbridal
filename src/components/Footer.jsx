@@ -144,7 +144,13 @@ function Footer() {
 
       <div className="footer-bottom">
         <p>{t('footer_rights')}</p>
-        <p>{t('footer_crafted')}</p>
+        <div style={{display:'flex',gap:'20px',alignItems:'center',flexWrap:'wrap'}}>
+          <p>{t('footer_crafted')}</p>
+          <a href="/privacy" style={{color:'rgba(255,255,255,0.25)',fontSize:'11px',letterSpacing:'1px',textDecoration:'none',transition:'color 0.3s'}}
+            onMouseOver={e=>e.target.style.color='#c9a84c'} onMouseOut={e=>e.target.style.color='rgba(255,255,255,0.25)'}>
+            Privacy Policy
+          </a>
+        </div>
       </div>
     </footer>
   );

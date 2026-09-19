@@ -10,10 +10,12 @@ import Reviews from "./components/Reviews";
 import Booking from "./components/Booking";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
+import CookieBanner from "./components/CookieBanner";
 import AdminPage from './pages/AdminPage';
 import GalleryPage from './pages/GalleryPage';
 import BlogPage from './pages/BlogPage';
 import ArticlePage from './pages/ArticlePage';
+import PrivacyPage from './pages/PrivacyPage';
 import Viewcollection from './components/Viewcollection';
 import './App.css';
 
@@ -73,6 +75,7 @@ export default function App() {
     <LangProvider>
       <BrowserRouter>
         <ScrollTop />
+        <CookieBanner />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/gallery" element={
@@ -85,6 +88,9 @@ export default function App() {
             <><SEO title="Bridal Journal — Viktoria Kotekh" description="Stories, tips and inspiration from Viktoria Kotekh's atelier." /><BlogPage /></>
           } />
           <Route path="/blog/:id" element={<ArticlePage />} />
+          <Route path="/privacy" element={
+            <><SEO title="Privacy Policy — Viktoria Kotekh" description="Privacy policy and cookie information for viktoriakotekhbridal.com" /><PrivacyPage /></>
+          } />
           <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </BrowserRouter>
