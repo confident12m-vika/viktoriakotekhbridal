@@ -655,9 +655,10 @@ function Dashboard({ token, onLogout }) {
       <div style={S.tabs}>
         {[
           {key:'clients',  label:'📋 Requests'},
-          {key:'gallery',  label:'🖼 Gallery'},
-          {key:'services', label:'✂️ Services'},
-          {key:'blog',     label:'📝 Journal'},
+          {key:'gallery',    label:'🖼 Gallery'},
+          {key:'services',   label:'✂️ Services'},
+          {key:'blog',       label:'📝 Journal'},
+          {key:'newsletter', label:'📧 Newsletter'},
         ].map(t=>(
           <button key={t.key} style={{...S.tab,...(tab===t.key?S.tabActive:{})}} onClick={()=>setTab(t.key)}>
             {t.label}
