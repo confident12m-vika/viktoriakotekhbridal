@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../i18n/useTranslation.jsx";
 
 function Hero() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
   return (
     <header className="hero">
       <img src="/images/myimg.jpg" className="hero-img" alt="Viktoria Kotekh Couture" />
@@ -14,8 +17,11 @@ function Hero() {
         <p className="hero-description">{t('hero_desc')}</p>
         <div className="hero-btns">
           <a href="#booking" className="btn-gold">{t('hero_btn1')}</a>
-          <a href="#Viewcollection" className="btn-outline">{t('hero_btn2')}</a>
-          {/* زرار المتجر الأونلاين */}
+          {/* زرار View Collection يروح صفحة /collection */}
+          <button className="btn-outline" onClick={() => navigate('/collection')}>
+            {t('hero_btn2')}
+          </button>
+          {/* زرار المتجر */}
           <a
             href="https://viktoriakotekhbridal.online"
             className="btn-store"

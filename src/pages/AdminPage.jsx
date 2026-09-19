@@ -90,6 +90,70 @@ function Login({ onLogin }) {
   );
 }
 
+
+// ── Reply Modal ──────────────────────────────────────────────
+function ReplyModal({ token, client, onClose }) {
+  const [open, setOpen]       = useState(false);
+  const [subject, setSubject] = useState(`Re: Your inquiry — Viktoria Kotekh`);
+  const [message, setMessage] = useState(`Dear ${client.name},\n\nThank you for reaching out to Viktoria Kotekh.\n\n`);
+  const [sending, setSending] = useState(false);
+  const [done, setDone]       = useState(false);
+
+  async function send() {
+    setSending(true);
+    try {
+      const res = await fetch(`${API}/api/admin/clients/${client._id}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ subject, message }),
+      });
+      if (!res.ok) throw new Error();
+      setDone(true);
+      setTimeout(() => { setOpen(false); setDone(false); }, 2000);
+    } catch { alert('Failed to send email'); }
+    setSending(false);
+  }
+
+  if (!open) return (
+    <button
+      style={{marginTop:'8px',background:'transparent',border:'1px solid rgba(201,168,76,0.5)',color:'#c9a84c',padding:'10px 24px',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:'11px',letterSpacing:'1px',width:'100%'}}
+      onClick={()=>setOpen(true)}
+    >
+      ✉️ Reply by Email
+    </button>
+  );
+
+  return (
+    <div style={{marginTop:'12px',background:'rgba(0,0,0,0.4)',border:'1px solid rgba(201,168,76,0.2)',padding:'16px'}}>
+      {done ? (
+        <p style={{color:'#c9a84c',textAlign:'center',padding:'10px'}}>✓ Email sent!</p>
+      ) : (
+        <>
+          <input
+            value={subject}
+            onChange={e=>setSubject(e.target.value)}
+            style={{...{width:'100%',padding:'10px 12px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'white',fontFamily:"'Jost',sans-serif",fontSize:'12px',outline:'none',marginBottom:'8px',boxSizing:'border-box'}}}
+            placeholder="Subject"
+          />
+          <textarea
+            value={message}
+            onChange={e=>setMessage(e.target.value)}
+            style={{width:'100%',padding:'10px 12px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'white',fontFamily:"'Jost',sans-serif",fontSize:'12px',outline:'none',minHeight:'120px',resize:'vertical',boxSizing:'border-box',marginBottom:'8px'}}
+          />
+          <div style={{display:'flex',gap:'8px'}}>
+            <button style={{flex:1,padding:'10px',background:'#c9a84c',color:'#0a0a0a',border:'none',fontFamily:"'Jost',sans-serif",fontSize:'11px',letterSpacing:'2px',cursor:'pointer'}} onClick={send} disabled={sending}>
+              {sending ? 'Sending...' : 'Send Email'}
+            </button>
+            <button style={{padding:'10px 16px',background:'transparent',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:'11px'}} onClick={()=>setOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Clients Tab ──────────────────────────────────────────────
 function Clients({ token, onLogout }) {
   const [clients, setClients] = useState([]);
@@ -196,6 +260,9 @@ function Clients({ token, onLogout }) {
             <div style={S.modalMsg}>"{selected.message}"</div>
             <div style={{...S.date,marginBottom:'12px'}}>📅 {new Date(selected.createdAt).toLocaleDateString('en-GB')}</div>
             <button style={S.delBtn} onClick={()=>del(selected._id)}>🗑 Delete</button>
+            {selected.email && (
+              <ReplyModal token={token} client={selected} onClose={()=>setSelected(null)} />
+            )}
           </div>
         </div>
       )}
@@ -478,6 +545,102 @@ function BlogAdmin({ token }) {
   );
 }
 
+
+// ── Newsletter Admin Tab ─────────────────────────────────────
+function NewsletterAdmin({ token }) {
+  const [subscribers, setSubscribers] = useState([]);
+  const [subject, setSubject]         = useState('');
+  const [message, setMessage]         = useState('');
+  const [sending, setSending]         = useState(false);
+  const [sent, setSent]               = useState(null);
+  const [view, setView]               = useState('compose'); // compose | subscribers
+
+  const loadSubs = useCallback(async () => {
+    const res = await fetch(`${API}/api/admin/newsletter/subscribers`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await res.json();
+    setSubscribers(Array.isArray(d) ? d : []);
+  }, [token]);
+
+  useEffect(() => { loadSubs(); }, [loadSubs]);
+
+  async function sendNewsletter() {
+    if (!subject.trim() || !message.trim()) return alert('Subject and message required');
+    if (!confirm(`Send to ${subscribers.length} subscribers?`)) return;
+    setSending(true);
+    try {
+      const res = await fetch(`${API}/api/admin/newsletter/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          subject,
+          html: message.split('\n').map(l => `<p style="margin:0 0 12px;font-size:15px;line-height:1.8;color:#333;">${l}</p>`).join(''),
+        }),
+      });
+      const d = await res.json();
+      setSent(d.sent);
+      setSubject(''); setMessage('');
+    } catch { alert('Error sending'); }
+    setSending(false);
+  }
+
+  async function deleteSub(id) {
+    if (!confirm('Remove this subscriber?')) return;
+    await fetch(`${API}/api/admin/newsletter/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${token}` } });
+    loadSubs();
+  }
+
+  const inp = {...S.search, marginBottom:'10px', display:'block', width:'100%'};
+  const ta  = {...inp, minHeight:'180px', resize:'vertical', fontFamily:"'Jost',sans-serif"};
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:'8px',marginBottom:'24px'}}>
+        <button style={{...S.fBtn,...(view==='compose'?S.fBtnA:{})}} onClick={()=>setView('compose')}>✉️ Compose</button>
+        <button style={{...S.fBtn,...(view==='subscribers'?S.fBtnA:{})}} onClick={()=>{setView('subscribers');loadSubs();}}>
+          👥 Subscribers ({subscribers.length})
+        </button>
+      </div>
+
+      {view === 'compose' && (
+        <div style={{maxWidth:'680px'}}>
+          {sent !== null && (
+            <div style={{background:'rgba(201,168,76,0.1)',border:'1px solid rgba(201,168,76,0.3)',padding:'14px 18px',marginBottom:'20px',color:'#c9a84c',fontSize:'13px'}}>
+              ✓ Email sent to {sent} subscribers!
+            </div>
+          )}
+          <input style={inp} placeholder="Email Subject *" value={subject} onChange={e=>setSubject(e.target.value)} />
+          <textarea style={ta} placeholder="Email Message (plain text, each line = a paragraph) *" value={message} onChange={e=>setMessage(e.target.value)} />
+          <p style={{color:'rgba(255,255,255,0.25)',fontSize:'11px',marginBottom:'16px'}}>
+            Will be sent to {subscribers.length} active subscribers · Unsubscribe link added automatically
+          </p>
+          <button style={S.uploadBtn} onClick={sendNewsletter} disabled={sending || !subscribers.length}>
+            {sending ? 'Sending...' : `Send to ${subscribers.length} subscribers`}
+          </button>
+        </div>
+      )}
+
+      {view === 'subscribers' && (
+        <div>
+          {subscribers.length === 0 && <p style={S.center}>No subscribers yet.</p>}
+          <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+            {subscribers.map(sub => (
+              <div key={sub._id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'#111',border:'1px solid rgba(255,255,255,0.05)'}}>
+                <div>
+                  <span style={{color:'white',fontSize:'13px'}}>{sub.email}</span>
+                  <span style={{color:'rgba(255,255,255,0.25)',fontSize:'11px',marginLeft:'16px'}}>
+                    {new Date(sub.createdAt).toLocaleDateString('en-GB')}
+                  </span>
+                </div>
+                <button style={{...S.fBtn,padding:'5px 12px',borderColor:'#e74c3c',color:'#e74c3c',fontSize:'11px'}} onClick={()=>deleteSub(sub._id)}>Remove</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Dashboard({ token, onLogout }) {
   const [tab, setTab] = useState('clients');
   return (
@@ -506,6 +669,7 @@ function Dashboard({ token, onLogout }) {
         {tab === 'gallery' && <GalleryAdmin token={token} />}
         {tab === 'services' && <ServicesAdmin token={token} />}
         {tab === 'blog' && <BlogAdmin token={token} />}
+        {tab === 'newsletter' && <NewsletterAdmin token={token} />}
       </div>
     </div>
   );

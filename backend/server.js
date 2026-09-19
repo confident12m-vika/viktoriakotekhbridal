@@ -74,6 +74,14 @@ const blogSchema = new mongoose.Schema({
 const Blog = mongoose.model('Blog', blogSchema);
 
 
+
+// ── Newsletter Model ───────────────────────────────────────
+const newsletterSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  active: { type: Boolean, default: true },
+}, { timestamps: true });
+const Newsletter = mongoose.model('Newsletter', newsletterSchema);
+
 // ── Store Product Model ────────────────────────────────────
 const productSchema = new mongoose.Schema({
   name:        { type: String, required: true },
@@ -242,6 +250,36 @@ app.get('/api/blog/:id', async (req, res) => {
 });
 
 
+
+// ── NEWSLETTER ROUTES ─────────────────────────────────────
+// اشتراك
+app.post('/api/newsletter/subscribe', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email required' });
+    const existing = await Newsletter.findOne({ email });
+    if (existing) {
+      if (!existing.active) {
+        existing.active = true;
+        await existing.save();
+        return res.json({ success: true, message: 'Resubscribed' });
+      }
+      return res.status(400).json({ message: 'Already subscribed' });
+    }
+    await Newsletter.create({ email });
+    res.status(201).json({ success: true });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// إلغاء اشتراك (unsubscribe link في الإيميل)
+app.get('/api/newsletter/unsubscribe', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (email) await Newsletter.findOneAndUpdate({ email }, { active: false });
+    res.send('<html><body style="font-family:sans-serif;text-align:center;padding:60px"><h2>Unsubscribed</h2><p>You have been removed from our mailing list.</p></body></html>');
+  } catch { res.send('Error'); }
+});
+
 // ── STORE PUBLIC ROUTES ────────────────────────────────────
 app.get('/api/store/products', async (req, res) => {
   try {
@@ -261,6 +299,83 @@ app.get('/api/store/products/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+
+
+// Newsletter admin
+app.get('/api/admin/newsletter/subscribers', auth, async (req, res) => {
+  try {
+    const subs = await Newsletter.find({ active: true }).sort({ createdAt: -1 });
+    res.json(subs);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.post('/api/admin/newsletter/send', auth, async (req, res) => {
+  try {
+    const { subject, html } = req.body;
+    if (!subject || !html) return res.status(400).json({ message: 'Subject and content required' });
+    const subscribers = await Newsletter.find({ active: true });
+    if (!subscribers.length) return res.status(400).json({ message: 'No subscribers' });
+
+    const BATCH = 10;
+    let sent = 0;
+    for (let i = 0; i < subscribers.length; i += BATCH) {
+      const batch = subscribers.slice(i, i + BATCH);
+      await Promise.all(batch.map(sub =>
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Viktoria Kotekh <newsletter@viktoriakotekhbridal.com>',
+            to: [sub.email],
+            subject,
+            html: html + `<br><br><p style="font-size:11px;color:#999;text-align:center"><a href="${process.env.FRONTEND_URL || 'https://www.viktoriakotekhbridal.com'}/api/newsletter/unsubscribe?email=${encodeURIComponent(sub.email)}" style="color:#999">Unsubscribe</a></p>`,
+          }),
+        })
+      ));
+      sent += batch.length;
+    }
+    res.json({ success: true, sent });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.delete('/api/admin/newsletter/:id', auth, async (req, res) => {
+  try {
+    await Newsletter.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+
+// رد على طلب عميل بالإيميل
+app.post('/api/admin/clients/:id/reply', auth, async (req, res) => {
+  try {
+    const { subject, message } = req.body;
+    const client = await Client.findById(req.params.id);
+    if (!client) return res.status(404).json({ message: 'Client not found' });
+    if (!client.email) return res.status(400).json({ message: 'Client has no email' });
+
+    const emailRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Viktoria Kotekh <info@viktoriakotekhbridal.com>',
+        to: [client.email],
+        subject: subject || `Re: Your inquiry — Viktoria Kotekh`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;background:#faf8f4;">
+            <img src="https://www.viktoriakotekhbridal.com/images/logo.jpg" style="width:80px;margin-bottom:20px;" />
+            <h2 style="font-family:Georgia,serif;color:#c9a84c;font-weight:300;">Dear ${client.name},</h2>
+            <div style="font-size:15px;line-height:1.8;color:#333;margin:20px 0;white-space:pre-wrap;">${message}</div>
+            <hr style="border-color:rgba(201,168,76,0.3);margin:24px 0;">
+            <p style="font-size:12px;color:#999;">Viktoria Kotekh Bridal · Cairo & Madrid<br>+20 155 883 1957 · info@viktoriakotekhbridal.com</p>
+          </div>
+        `,
+      }),
+    });
+    if (!emailRes.ok) throw new Error('Email send failed');
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
 
 // ── STORE ADMIN ROUTES ─────────────────────────────────────
 app.get('/api/admin/store/products', auth, async (req, res) => {

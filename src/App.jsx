@@ -14,22 +14,20 @@ import AdminPage from './pages/AdminPage';
 import GalleryPage from './pages/GalleryPage';
 import BlogPage from './pages/BlogPage';
 import ArticlePage from './pages/ArticlePage';
+import Viewcollection from './components/Viewcollection';
 import './App.css';
 
-// ── SEO Helper — يغير title و description حسب الصفحة ──
 function SEO({ title, description }) {
   useEffect(() => {
     if (title) document.title = title;
     const desc = document.querySelector('meta[name="description"]');
     if (desc && description) desc.setAttribute('content', description);
-    // canonical
-    let canonical = document.querySelector('link[rel="canonical"]');
+    const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', window.location.origin + window.location.pathname);
   }, [title, description]);
   return null;
 }
 
-// ── Scroll to top on route change ──
 function ScrollTop() {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
@@ -51,7 +49,7 @@ function Home() {
     <>
       <SEO
         title="Viktoria Kotekh — Bespoke Bridal Couture | Cairo & Madrid"
-        description="Luxury bespoke bridal gowns, evening wear and expert alterations by Viktoria Kotekh. Serving brides in Cairo, Egypt and Madrid, Spain with 15+ years of couture craftsmanship."
+        description="Luxury bespoke bridal gowns, evening wear and expert alterations by Viktoria Kotekh. Serving brides in Cairo, Egypt and Madrid, Spain."
       />
       <Navbar />
       <Hero />
@@ -78,22 +76,13 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/gallery" element={
-            <>
-              <SEO
-                title="Bridal Gallery — Viktoria Kotekh Couture"
-                description="Explore Viktoria Kotekh's portfolio of bespoke bridal gowns, evening wear and couture creations. Handcrafted in Cairo and Madrid."
-              />
-              <GalleryPage />
-            </>
+            <><SEO title="Bridal Gallery — Viktoria Kotekh" description="Explore our portfolio of bespoke bridal gowns and couture creations." /><GalleryPage /></>
+          } />
+          <Route path="/collection" element={
+            <><SEO title="Collections — Viktoria Kotekh" description="Discover our SS 2026 bridal and couture collections." /><Viewcollection /></>
           } />
           <Route path="/blog" element={
-            <>
-              <SEO
-                title="Bridal Journal — Viktoria Kotekh"
-                description="Stories, tips and inspiration from Viktoria Kotekh's atelier. Bridal fashion, style advice and behind-the-scenes from Cairo and Madrid."
-              />
-              <BlogPage />
-            </>
+            <><SEO title="Bridal Journal — Viktoria Kotekh" description="Stories, tips and inspiration from Viktoria Kotekh's atelier." /><BlogPage /></>
           } />
           <Route path="/blog/:id" element={<ArticlePage />} />
           <Route path="/admin" element={<AdminPage />} />
