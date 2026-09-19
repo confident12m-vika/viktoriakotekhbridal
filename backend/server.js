@@ -75,6 +75,21 @@ const Blog = mongoose.model('Blog', blogSchema);
 
 
 
+
+// ── Collection Model ───────────────────────────────────────
+const collectionSchema = new mongoose.Schema({
+  title:       { type: String, required: true },
+  subtitle:    { type: String, default: '' },
+  description: { type: String, default: '' },
+  tag:         { type: String, default: '' },
+  badge:       { type: String, default: 'COUTURE' },
+  image:       { type: String, default: '' },
+  accent:      { type: String, default: '#b8956a' },
+  bg:          { type: String, default: '#0e0b07' },
+  published:   { type: Boolean, default: true },
+}, { timestamps: true });
+const Collection = mongoose.model('Collection', collectionSchema);
+
 // ── Newsletter Model ───────────────────────────────────────
 const newsletterSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -144,6 +159,13 @@ const blogStorage = new CloudinaryStorage({
   cloudinary,
   params: { folder: 'viktoria-kotekh/blog', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width: 1400, crop: 'limit' }] },
 });
+
+
+const collectionStorage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: 'viktoria-kotekh/collections', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width: 1400, crop: 'limit' }] },
+});
+const uploadCollection = multer({ storage: collectionStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const productStorage = new CloudinaryStorage({
   cloudinary,
@@ -252,6 +274,15 @@ app.get('/api/blog/:id', async (req, res) => {
 
 
 
+
+// ── COLLECTION PUBLIC ROUTES ───────────────────────────────
+app.get('/api/collections', async (_, res) => {
+  try {
+    const cols = await Collection.find({ published: true }).sort({ createdAt: -1 });
+    res.json(cols);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // ── Contact Form ───────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
@@ -343,6 +374,42 @@ app.get('/api/store/products/:id', async (req, res) => {
 });
 
 
+
+
+// Admin collections
+app.get('/api/admin/collections', auth, async (_, res) => {
+  try { const cols = await Collection.find().sort({ createdAt: -1 }); res.json(cols); }
+  catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.post('/api/admin/collections', auth, uploadCollection.single('image'), async (req, res) => {
+  try {
+    const { title, subtitle, description, tag, badge, accent, bg, published } = req.body;
+    if (!title) return res.status(400).json({ message: 'Title required' });
+    const col = await Collection.create({
+      title, subtitle: subtitle||'', description: description||'',
+      tag: tag||'', badge: badge||'COUTURE', accent: accent||'#b8956a', bg: bg||'#0e0b07',
+      image: req.file ? req.file.path : '',
+      published: published !== 'false',
+    });
+    res.status(201).json({ success: true, col });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.put('/api/admin/collections/:id', auth, uploadCollection.single('image'), async (req, res) => {
+  try {
+    const update = { ...req.body, published: req.body.published !== 'false' };
+    if (req.file) update.image = req.file.path;
+    const col = await Collection.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!col) return res.status(404).json({ message: 'Not found' });
+    res.json({ success: true, col });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.delete('/api/admin/collections/:id', auth, async (req, res) => {
+  try { await Collection.findByIdAndDelete(req.params.id); res.json({ success: true }); }
+  catch (err) { res.status(500).json({ message: err.message }); }
+});
 
 // Newsletter admin
 app.get('/api/admin/newsletter/subscribers', auth, async (req, res) => {

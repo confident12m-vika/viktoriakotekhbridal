@@ -810,3 +810,31 @@ html, body, #root { width: 100%; max-width: 100%; overflow-x: hidden; }
   .lang-desktop-slot  { display: none !important; }
   .lang-mobile-slot   { display: block; width: 100%; }
 }
+
+/* ══ BTN-OUTLINE-GOLD — شفاف ذهبي (للكوليكشن والمتجر في الهيرو) ══ */
+.btn-outline-gold {
+  padding: 15px 42px;
+  border: 1px solid rgba(201,168,76,0.6);
+  background: rgba(201,168,76,0.08);
+  color: #c9a84c;
+  text-decoration: none;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: var(--transition, 0.4s ease);
+  cursor: pointer;
+  font-family: 'Jost', sans-serif;
+  display: inline-block;
+  text-align: center;
+}
+.btn-outline-gold:hover {
+  background: rgba(201,168,76,0.18);
+  border-color: #c9a84c;
+  color: #e8d5a3;
+}
+@media(max-width: 768px) {
+  .btn-outline-gold {
+    width: 100%;
+    max-width: 280px;
+  }
+}

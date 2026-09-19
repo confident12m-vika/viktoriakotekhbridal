@@ -16,6 +16,14 @@ function BlogPage() {
       .catch(() => setLoading(false));
   }, []);
 
+
+  function translatePost(post) {
+    const lang = localStorage.getItem('vk_lang') || 'en';
+    const tl   = lang === 'ar' ? 'ar' : lang === 'es' ? 'es' : lang === 'ru' ? 'ru' : 'en';
+    const text = encodeURIComponent(`${post.title}\n${post.subtitle||''}\n${post.excerpt||''}`);
+    window.open(`https://translate.google.com/?sl=auto&tl=${tl}&text=${text}&op=translate`, '_blank');
+  }
+
   return (
     <div className="blog-page">
       <div className="blog-page-header">
@@ -53,6 +61,12 @@ function BlogPage() {
               {post.subtitle && <p style={{color:'rgba(255,255,255,0.4)',fontSize:'13px',fontStyle:'italic'}}>{post.subtitle}</p>}
               <p className="blog-card-excerpt">{post.excerpt || post.content?.slice(0,180)}...</p>
               <span className="blog-card-read">Read Article →</span>
+              <button
+                onClick={e=>{e.stopPropagation();translatePost(post);}}
+                style={{marginTop:'8px',background:'transparent',border:'1px solid rgba(201,168,76,0.3)',color:'#c9a84c',padding:'5px 12px',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:'10px',letterSpacing:'1px',display:'block'}}
+              >
+                🌐 Translate
+              </button>
             </div>
           </div>
         ))}

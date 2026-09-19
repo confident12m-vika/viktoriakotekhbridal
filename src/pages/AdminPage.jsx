@@ -641,6 +641,135 @@ function NewsletterAdmin({ token }) {
   );
 }
 
+
+// ── Collection Admin Tab ─────────────────────────────────────
+const BADGE_OPTIONS = ['COUTURE','BRIDAL','EVENING','READY-TO-WEAR','LIMITED'];
+const ACCENT_COLORS = [
+  { label:'Gold',   value:'#b8956a' },
+  { label:'Rose',   value:'#d4a5b5' },
+  { label:'Silver', value:'#8a8a8a' },
+  { label:'Ivory',  value:'#c8bfa8' },
+  { label:'Black',  value:'#c9a84c' },
+];
+
+function CollectionAdmin({ token }) {
+  const [cols, setCols]       = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving]   = useState(false);
+  const [form, setForm] = useState({ title:'', subtitle:'', description:'', tag:'', badge:'COUTURE', accent:'#b8956a', bg:'#0e0b07', published:true, image:null });
+  const [imgPreview, setImgPreview] = useState('');
+
+  const load = useCallback(async () => {
+    const res = await fetch(`${API}/api/admin/collections`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await res.json();
+    setCols(Array.isArray(d) ? d : []);
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  function openNew() {
+    setForm({ title:'', subtitle:'', description:'', tag:'SS 2026', badge:'COUTURE', accent:'#b8956a', bg:'#0e0b07', published:true, image:null });
+    setImgPreview(''); setEditing('new');
+  }
+
+  function openEdit(col) {
+    setForm({ title:col.title, subtitle:col.subtitle||'', description:col.description||'', tag:col.tag||'', badge:col.badge||'COUTURE', accent:col.accent||'#b8956a', bg:col.bg||'#0e0b07', published:col.published, image:null });
+    setImgPreview(col.image||''); setEditing(col);
+  }
+
+  async function save() {
+    setSaving(true);
+    const fd = new FormData();
+    Object.entries(form).forEach(([k,v]) => { if (v !== null && v !== undefined) fd.append(k,v); });
+    const isNew = editing === 'new';
+    const url = isNew ? `${API}/api/admin/collections` : `${API}/api/admin/collections/${editing._id}`;
+    await fetch(url, { method: isNew?'POST':'PUT', headers:{ Authorization:`Bearer ${token}` }, body:fd });
+    setSaving(false); setEditing(null); load();
+  }
+
+  async function del(id) {
+    if (!confirm('Delete this collection?')) return;
+    await fetch(`${API}/api/admin/collections/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${token}` } });
+    load();
+  }
+
+  const inp = { width:'100%', padding:'12px 16px', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'white', fontFamily:"'Jost',sans-serif", fontSize:'13px', outline:'none', marginBottom:'10px', boxSizing:'border-box' };
+
+  if (editing !== null) return (
+    <div style={{maxWidth:'640px'}}>
+      <h3 style={{color:'#c9a84c',fontSize:'16px',letterSpacing:'2px',marginBottom:'24px'}}>
+        {editing === 'new' ? 'New Collection' : 'Edit Collection'}
+      </h3>
+      <input style={inp} placeholder="Collection Title *" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} />
+      <input style={inp} placeholder="Subtitle (optional, any language)" value={form.subtitle} onChange={e=>setForm(f=>({...f,subtitle:e.target.value}))} />
+      <textarea style={{...inp,minHeight:'100px',resize:'vertical'}} placeholder="Description" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} />
+      <input style={inp} placeholder="Tag (e.g. HERITAGE · SS 2026)" value={form.tag} onChange={e=>setForm(f=>({...f,tag:e.target.value}))} />
+
+      {/* Badge */}
+      <p style={{color:'rgba(255,255,255,0.4)',fontSize:'11px',marginBottom:'8px',letterSpacing:'1px'}}>BADGE TYPE</p>
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'12px'}}>
+        {BADGE_OPTIONS.map(b=>(
+          <button key={b} style={{padding:'7px 14px',background:form.badge===b?'#c9a84c':'transparent',border:'1px solid rgba(201,168,76,'+(form.badge===b?'1)':'0.3)'),color:form.badge===b?'#0a0a0a':'rgba(255,255,255,0.5)',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:'10px',letterSpacing:'1px'}} onClick={()=>setForm(f=>({...f,badge:b}))}>
+            {b}
+          </button>
+        ))}
+      </div>
+
+      {/* Accent color */}
+      <p style={{color:'rgba(255,255,255,0.4)',fontSize:'11px',marginBottom:'8px',letterSpacing:'1px'}}>ACCENT COLOR</p>
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+        {ACCENT_COLORS.map(c=>(
+          <button key={c.value} onClick={()=>setForm(f=>({...f,accent:c.value}))} style={{width:'32px',height:'32px',background:c.value,border:form.accent===c.value?'2px solid white':'2px solid transparent',borderRadius:'50%',cursor:'pointer'}} title={c.label} />
+        ))}
+      </div>
+
+      <label style={{display:'flex',alignItems:'center',gap:'8px',color:'rgba(255,255,255,0.5)',fontSize:'12px',marginBottom:'16px',cursor:'pointer'}}>
+        <input type="checkbox" checked={form.published} onChange={e=>setForm(f=>({...f,published:e.target.checked}))} />
+        Published
+      </label>
+
+      <label style={{display:'block',padding:'14px',border:'1px dashed rgba(201,168,76,0.4)',color:'#c9a84c',fontSize:'11px',textAlign:'center',cursor:'pointer',marginBottom:'16px'}}>
+        📷 {form.image ? form.image.name : (imgPreview ? 'Change Image' : 'Add Collection Image')}
+        <input type="file" accept="image/*" hidden onChange={e=>{const f=e.target.files[0];if(f){setForm(p=>({...p,image:f}));setImgPreview(URL.createObjectURL(f));}}} />
+      </label>
+      {imgPreview && <img src={imgPreview} style={{width:'100%',maxHeight:'220px',objectFit:'cover',marginBottom:'16px'}} />}
+
+      <div style={{display:'flex',gap:'10px'}}>
+        <button style={{...S.uploadBtn}} onClick={save} disabled={saving}>{saving?'Saving...':'Save Collection'}</button>
+        <button style={{...S.fBtn,padding:'12px 24px'}} onClick={()=>setEditing(null)}>Cancel</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'24px'}}>
+        <p style={{color:'rgba(255,255,255,0.3)',fontSize:'12px'}}>{cols.length} collections</p>
+        <button style={S.uploadBtn} onClick={openNew}>+ New Collection</button>
+      </div>
+      {cols.length === 0 && <p style={S.center}>No collections yet. Add your first one.</p>}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'16px'}}>
+        {cols.map(col => (
+          <div key={col._id} style={{background:'#111',border:'1px solid rgba(201,168,76,0.15)',overflow:'hidden'}}>
+            {col.image && <img src={col.image.startsWith('http')?col.image:`${API}${col.image}`} alt={col.title} style={{width:'100%',height:'160px',objectFit:'cover'}} />}
+            <div style={{padding:'12px 14px 14px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}}>
+                <span style={{width:'12px',height:'12px',borderRadius:'50%',background:col.accent||'#b8956a',display:'inline-block'}}></span>
+                <p style={{color:'white',fontSize:'13px',fontFamily:"'Cormorant Garamond',serif"}}>{col.title}</p>
+              </div>
+              <p style={{color:'rgba(255,255,255,0.3)',fontSize:'11px',marginBottom:'12px'}}>{col.badge} · {col.published?'✅':'⬜ Draft'}</p>
+              <div style={{display:'flex',gap:'8px'}}>
+                <button style={{...S.fBtn,padding:'7px 14px',flex:1}} onClick={()=>openEdit(col)}>Edit</button>
+                <button style={{...S.fBtn,padding:'7px 14px',borderColor:'#e74c3c',color:'#e74c3c'}} onClick={()=>del(col._id)}>Delete</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Dashboard({ token, onLogout }) {
   const [tab, setTab] = useState('clients');
   return (
@@ -658,7 +787,8 @@ function Dashboard({ token, onLogout }) {
           {key:'gallery',    label:'🖼 Gallery'},
           {key:'services',   label:'✂️ Services'},
           {key:'blog',       label:'📝 Journal'},
-          {key:'newsletter', label:'📧 Newsletter'},
+          {key:'newsletter',  label:'📧 Newsletter'},
+          {key:'collection',  label:'✨ Collection'},
         ].map(t=>(
           <button key={t.key} style={{...S.tab,...(tab===t.key?S.tabActive:{})}} onClick={()=>setTab(t.key)}>
             {t.label}
@@ -671,6 +801,7 @@ function Dashboard({ token, onLogout }) {
         {tab === 'services' && <ServicesAdmin token={token} />}
         {tab === 'blog' && <BlogAdmin token={token} />}
         {tab === 'newsletter' && <NewsletterAdmin token={token} />}
+        {tab === 'collection' && <CollectionAdmin token={token} />}
       </div>
     </div>
   );

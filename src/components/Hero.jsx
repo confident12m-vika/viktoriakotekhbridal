@@ -16,15 +16,18 @@ function Hero() {
         </h1>
         <p className="hero-description">{t('hero_desc')}</p>
         <div className="hero-btns">
+          {/* زرار الحجز — ذهبي صلب */}
           <a href="#booking" className="btn-gold">{t('hero_btn1')}</a>
-          {/* زرار View Collection يروح صفحة /collection */}
-          <button className="btn-outline" onClick={() => navigate('/collection')}>
+
+          {/* زرار الكوليكشن — شفاف ذهبي */}
+          <button className="btn-outline-gold" onClick={() => navigate('/collection')}>
             {t('hero_btn2')}
           </button>
-          {/* زرار المتجر */}
+
+          {/* زرار المتجر — شفاف ذهبي نفس الستايل */}
           <a
             href="https://viktoriakotekhbridal.online"
-            className="btn-store"
+            className="btn-outline-gold"
             target="_blank"
             rel="noreferrer"
           >
