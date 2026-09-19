@@ -251,6 +251,49 @@ app.get('/api/blog/:id', async (req, res) => {
 
 
 
+
+// ── Contact Form ───────────────────────────────────────────
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message) return res.status(400).json({ message: 'All fields required' });
+
+    // إرسال إيميل إشعار
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: 'Viktoria Kotekh <info@viktoriakotekhbridal.com>',
+        to: [process.env.NOTIFICATION_EMAIL || 'mrzq2405@gmail.com'],
+        reply_to: email,
+        subject: `💌 New Contact Message — ${name}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;background:#0a0a0a;color:white;">
+            <h2 style="color:#c9a84c;letter-spacing:2px;">NEW CONTACT MESSAGE</h2>
+            <hr style="border-color:rgba(201,168,76,0.3);margin:16px 0;">
+            <p><strong style="color:#c9a84c;">Name:</strong> ${name}</p>
+            <p><strong style="color:#c9a84c;">Email:</strong> <a href="mailto:${email}" style="color:#c9a84c;">${email}</a></p>
+            <div style="margin:20px 0;padding:16px;background:#111;border-left:3px solid #c9a84c;">
+              <p style="color:#ccc;font-style:italic;white-space:pre-wrap;">"${message}"</p>
+            </div>
+            <p style="font-size:12px;color:#555;">You can reply directly to this email to respond to ${name}.</p>
+            <hr style="border-color:rgba(201,168,76,0.3);margin:16px 0;">
+            <p style="font-size:11px;color:#444;">Sent from viktoriakotekhbridal.com contact form</p>
+          </div>
+        `,
+      }),
+    });
+
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('Contact form error:', err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ── NEWSLETTER ROUTES ─────────────────────────────────────
 // اشتراك
 app.post('/api/newsletter/subscribe', async (req, res) => {
