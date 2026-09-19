@@ -73,6 +73,20 @@ const blogSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Blog = mongoose.model('Blog', blogSchema);
 
+
+// ── Store Product Model ────────────────────────────────────
+const productSchema = new mongoose.Schema({
+  name:        { type: String, required: true },
+  category:    { type: String, required: true, enum: ['bridal','evening','alterations','transformation'] },
+  description: { type: String, default: '' },
+  price:       { type: String, default: '' },
+  material:    { type: String, default: '' },
+  delivery:    { type: String, default: '' },
+  image:       { type: String, default: '' },
+  published:   { type: Boolean, default: true },
+}, { timestamps: true });
+const Product = mongoose.model('Product', productSchema);
+
 // ── Service Image Model ────────────────────────────────────
 // كل خدمة ليها رقم ثابت (1-6) وصورة قابلة للتغيير من الأدمن
 const serviceImageSchema = new mongoose.Schema({
@@ -122,6 +136,13 @@ const blogStorage = new CloudinaryStorage({
   cloudinary,
   params: { folder: 'viktoria-kotekh/blog', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width: 1400, crop: 'limit' }] },
 });
+
+const productStorage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: 'viktoria-kotekh/store-products', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width: 1400, crop: 'limit' }] },
+});
+const uploadProduct = multer({ storage: productStorage, limits: { fileSize: 10 * 1024 * 1024 } });
+
 const uploadBlog = multer({ storage: blogStorage, limits: { fileSize: 8 * 1024 * 1024 } });
 
 const uploadService = multer({ storage: serviceStorage, limits: { fileSize: 8 * 1024 * 1024 } });
@@ -217,6 +238,70 @@ app.get('/api/blog/:id', async (req, res) => {
     const post = await Blog.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Not found' });
     res.json(post);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+
+// ── STORE PUBLIC ROUTES ────────────────────────────────────
+app.get('/api/store/products', async (req, res) => {
+  try {
+    const { category, limit } = req.query;
+    const filter = { published: true };
+    if (category) filter.category = category;
+    const products = await Product.find(filter).sort({ createdAt: -1 }).limit(Number(limit) || 100);
+    res.json(products);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.get('/api/store/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Not found' });
+    res.json(product);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+
+// ── STORE ADMIN ROUTES ─────────────────────────────────────
+app.get('/api/admin/store/products', auth, async (req, res) => {
+  try {
+    const { category } = req.query;
+    const filter = {};
+    if (category) filter.category = category;
+    const products = await Product.find(filter).sort({ createdAt: -1 });
+    res.json(products);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.post('/api/admin/store/products', auth, uploadProduct.single('image'), async (req, res) => {
+  try {
+    const { name, category, description, price, material, delivery, published } = req.body;
+    if (!name || !category) return res.status(400).json({ message: 'Name and category required' });
+    const product = await Product.create({
+      name, category, description: description||'', price: price||'',
+      material: material||'', delivery: delivery||'',
+      image: req.file ? req.file.path : '',
+      published: published !== 'false',
+    });
+    res.status(201).json({ success: true, product });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.put('/api/admin/store/products/:id', auth, uploadProduct.single('image'), async (req, res) => {
+  try {
+    const { name, category, description, price, material, delivery, published } = req.body;
+    const update = { name, category, description, price, material, delivery, published: published !== 'false' };
+    if (req.file) update.image = req.file.path;
+    const product = await Product.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!product) return res.status(404).json({ message: 'Not found' });
+    res.json({ success: true, product });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+app.delete('/api/admin/store/products/:id', auth, async (req, res) => {
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
