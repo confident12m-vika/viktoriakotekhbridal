@@ -1,37 +1,39 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useOnDemandTranslate } from "../hooks/useOnDemandTranslate.js";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+// بطاقة كوليكشن مع زرار ترجمة
 function CollectionCard({ col, index }) {
   const [hovered, setHovered] = useState(false);
   const [visible, setVisible] = useState(false);
+
+  const accent = col.accent || "#b8956a";
+  const bg     = col.bg     || "#0e0b07";
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), index * 180 + 100);
     return () => clearTimeout(timer);
   }, [index]);
 
-  const accent = col.accent || "#b8956a";
-  const bg     = col.bg     || "#0e0b07";
+  // زرار الترجمة — نفس pattern Animal Joy
+  const { shown, translated, translating, toggle, show: showBtn } = useOnDemandTranslate({
+    title:       col.title       || '',
+    subtitle:    col.subtitle    || '',
+    description: col.description || '',
+  });
 
   const imgSrc = col.image
     ? (col.image.startsWith("http") ? col.image : `${API}${col.image}`)
     : "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800&q=80";
-
-  function translateCard() {
-    const lang = localStorage.getItem("vk_lang") || "en";
-    const text = encodeURIComponent(`${col.title}\n${col.subtitle || ""}\n${col.description}`);
-    const tl   = lang === "ar" ? "ar" : lang === "es" ? "es" : lang === "ru" ? "ru" : "en";
-    window.open(`https://translate.google.com/?sl=auto&tl=${tl}&text=${text}&op=translate`, "_blank");
-  }
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        position: "relative", borderRadius: "2px", overflow: "hidden", cursor: "pointer",
+        position: "relative", borderRadius: "2px", overflow: "hidden",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(40px)",
         transition: "opacity 0.8s ease, transform 0.8s ease, box-shadow 0.4s ease",
@@ -44,8 +46,7 @@ function CollectionCard({ col, index }) {
       {/* صورة */}
       <div style={{ position: "relative", height: "520px", overflow: "hidden" }}>
         <img
-          src={imgSrc}
-          alt={col.title}
+          src={imgSrc} alt={shown.title}
           style={{
             width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center",
             transform: hovered ? "scale(1.06)" : "scale(1)",
@@ -56,56 +57,69 @@ function CollectionCard({ col, index }) {
           position: "absolute", inset: 0,
           background: `linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 40%, ${bg}ee 100%)`,
         }} />
+
+        {/* Badge */}
         {col.badge && (
           <div style={{
             position: "absolute", top: "20px", left: "20px",
-            padding: "5px 12px",
-            border: `1px solid ${accent}`,
-            color: accent,
-            fontFamily: "'Cormorant Garamond', serif",
+            padding: "5px 12px", border: `1px solid ${accent}`,
+            color: accent, fontFamily: "'Cormorant Garamond', serif",
             fontSize: "9px", letterSpacing: "3px", fontWeight: 600,
             background: `${bg}cc`, backdropFilter: "blur(4px)",
           }}>
             {col.badge}
           </div>
         )}
-        {/* زرار ترجمة */}
-        <button
-          onClick={e => { e.stopPropagation(); translateCard(); }}
-          style={{
-            position: "absolute", top: "20px", right: "20px",
-            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)",
-            border: `1px solid ${accent}55`, color: accent,
-            padding: "5px 12px", cursor: "pointer",
-            fontFamily: "'Jost', sans-serif", fontSize: "10px", letterSpacing: "1px",
-          }}
-          title="Translate this card"
-        >
-          🌐 Translate
-        </button>
+
+        {/* زرار الترجمة — أعلى يمين الصورة، يظهر بس لو اللغة مش إنجليزي */}
+        {showBtn && (
+          <button
+            onClick={e => { e.stopPropagation(); toggle(); }}
+            style={{
+              position: "absolute", top: "16px", right: "16px",
+              background: translated ? `${accent}22` : "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(8px)",
+              border: `1px solid ${accent}66`,
+              color: accent,
+              padding: "6px 14px",
+              cursor: "pointer",
+              fontFamily: "'Jost', sans-serif",
+              fontSize: "10px", letterSpacing: "1.5px",
+              transition: "0.2s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {translating ? '...' : translated ? '✕ Original' : '🌐 Translate'}
+          </button>
+        )}
       </div>
 
       {/* محتوى */}
       <div style={{ padding: "28px 28px 32px" }}>
         <div style={{ width: hovered ? "60px" : "30px", height: "1px", background: accent, marginBottom: "18px", transition: "width 0.4s ease" }} />
+
         {col.tag && (
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "10px", letterSpacing: "3px", color: accent, marginBottom: "10px", opacity: 0.9 }}>
             {col.tag}
           </p>
         )}
+
         <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(24px,4vw,32px)", fontWeight: 300, color: "#f5f0ea", lineHeight: 1.1, margin: "0 0 6px", letterSpacing: "1px" }}>
-          {col.title}
+          {shown.title}
         </h2>
-        {col.subtitle && (
+
+        {shown.subtitle && (
           <p style={{ fontSize: "13px", color: accent, opacity: 0.7, marginBottom: "16px", letterSpacing: "1px" }}>
-            {col.subtitle}
+            {shown.subtitle}
           </p>
         )}
-        {col.description && (
+
+        {shown.description && (
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "14.5px", color: "#b0a898", lineHeight: 1.75, marginBottom: "28px", fontStyle: "italic" }}>
-            {col.description}
+            {shown.description}
           </p>
         )}
+
         <button style={{
           background: "transparent", border: `1px solid ${accent}`, color: accent,
           padding: "11px 28px", fontFamily: "'Cormorant Garamond', serif",
