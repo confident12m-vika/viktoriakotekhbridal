@@ -5,9 +5,9 @@ import { useOnDemandTranslate } from '../hooks/useOnDemandTranslate.js';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// كومبوننت لكل بطاقة مقال مع زرار الترجمة
 function BlogCard({ post, featured, onClick }) {
-  const { lang } = useLang();
+  const { t } = useLang();
+  const lang = localStorage.getItem('vk_lang') || 'en';
 
   const { shown, translated, translating, toggle, show: showBtn } = useOnDemandTranslate({
     title:   post.title   || '',
@@ -19,11 +19,7 @@ function BlogCard({ post, featured, onClick }) {
     : null;
 
   return (
-    <div
-      className={`blog-card ${featured ? 'blog-card-featured' : ''}`}
-      onClick={onClick}
-      style={{ cursor: 'pointer' }}
-    >
+    <div className={`blog-card ${featured ? 'blog-card-featured' : ''}`} onClick={onClick} style={{ cursor:'pointer' }}>
       <div className="blog-card-img">
         {imgSrc
           ? <img src={imgSrc} alt={shown.title} />
@@ -34,19 +30,19 @@ function BlogCard({ post, featured, onClick }) {
 
       <div className="blog-card-body">
         <div className="blog-card-meta">
-          <span>{new Date(post.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}</span>
+          <span>{new Date(post.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day:'numeric', month:'long', year:'numeric' })}</span>
         </div>
 
         <h2 className="blog-card-title">{shown.title}</h2>
 
         {post.subtitle && (
-          <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'13px', fontStyle:'italic' }}>{post.subtitle}</p>
+          <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'13px', fontStyle:'italic', marginBottom:'8px' }}>{post.subtitle}</p>
         )}
 
         <p className="blog-card-excerpt">{shown.excerpt}...</p>
 
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:'8px' }}>
-          <span className="blog-card-read">Read Article →</span>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:'12px', flexWrap:'wrap', gap:'8px' }}>
+          <span className="blog-card-read">{t('journal_read')}</span>
 
           {/* زرار الترجمة — يظهر بس لو اللغة مش إنجليزي */}
           {showBtn && (
@@ -63,9 +59,10 @@ function BlogCard({ post, featured, onClick }) {
                 letterSpacing: '1px',
                 transition: '0.2s',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
-              {translating ? '...' : translated ? '✕ Original' : '🌐 Translate'}
+              {translating ? t('journal_translating') : translated ? t('journal_original') : t('journal_translate')}
             </button>
           )}
         </div>
@@ -91,19 +88,23 @@ export default function BlogPage() {
   return (
     <div className="blog-page">
       <div className="blog-page-header">
-        <button className="gallery-back-btn" onClick={() => navigate('/')}>← Back</button>
-        <span className="section-label" style={{ color:'#c9a84c' }}>Journal</span>
-        <h1 className="section-title" style={{ color:'white' }}>Bridal Journal</h1>
-        <p className="blog-page-sub">Stories, tips & inspiration from Viktoria's atelier</p>
+        <button className="gallery-back-btn" onClick={() => navigate('/')}>
+          {t('journal_back')}
+        </button>
+        <span className="section-label" style={{ color:'#c9a84c' }}>{t('journal_label')}</span>
+        <h1 className="section-title" style={{ color:'white' }}>{t('journal_title')}</h1>
+        <p className="blog-page-sub">{t('journal_sub')}</p>
       </div>
 
       <div className="blog-grid" style={{ marginTop:'40px' }}>
         {loading && (
-          <p style={{ color:'rgba(255,255,255,0.3)', gridColumn:'1/-1', textAlign:'center', padding:'60px' }}>Loading...</p>
+          <p style={{ color:'rgba(255,255,255,0.3)', gridColumn:'1/-1', textAlign:'center', padding:'60px', letterSpacing:'2px' }}>
+            Loading...
+          </p>
         )}
         {!loading && posts.length === 0 && (
           <p style={{ color:'rgba(255,255,255,0.3)', gridColumn:'1/-1', textAlign:'center', padding:'60px' }}>
-            No articles published yet. Check back soon.
+            {t('journal_empty')}
           </p>
         )}
         {posts.map((post, i) => (
