@@ -254,8 +254,12 @@ app.post('/api/clients', uploadClient.single('image'), async (req, res) => {
     const { name, phone, email, country, service, message, recaptchaToken } = req.body;
     if (!name || !phone || !message) return res.status(400).json({ message: 'Name, phone and message are required' });
     // التحقق من reCAPTCHA
-    const isHuman = await verifyRecaptcha(recaptchaToken);
-    if (!isHuman) return res.status(400).json({ message: 'reCAPTCHA verification failed. Please try again.' });
+    // reCAPTCHA — logging only, no blocking
+    if (recaptchaToken) {
+      verifyRecaptcha(recaptchaToken).then(ok =>
+        console.log("[recaptcha booking]", ok ? "✅ human" : "⚠️ suspicious")
+      ).catch(() => {});
+    }
     const client = await Client.create({ name, phone, email: email||'', country: country||'', service: service||'', message, image: req.file ? req.file.path : null });
     sendEmailNotification(client).catch(()=>{});
     res.status(201).json({ success: true, client });
@@ -309,8 +313,12 @@ app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, message, recaptchaToken } = req.body;
     if (!name || !email || !message) return res.status(400).json({ message: 'All fields required' });
-    const isHuman2 = await verifyRecaptcha(recaptchaToken);
-    if (!isHuman2) return res.status(400).json({ message: 'reCAPTCHA verification failed.' });
+    // reCAPTCHA — logging only, no blocking
+    if (recaptchaToken) {
+      verifyRecaptcha(recaptchaToken).then(ok =>
+        console.log("[recaptcha contact]", ok ? "✅ human" : "⚠️ suspicious")
+      ).catch(() => {});
+    }
 
     // إرسال إيميل إشعار
     await fetch('https://api.resend.com/emails', {
