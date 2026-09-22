@@ -2,6 +2,18 @@ import { useState } from "react";
 import { useTranslation } from "../i18n/useTranslation.jsx";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const RECAPTCHA_KEY = '6Lf9OMktAAAAAHYu-VBUBW8BeYDjBiiIhgeZFUcc';
+
+async function getRecaptchaToken() {
+  return new Promise((resolve) => {
+    if (!window.grecaptcha) { resolve(''); return; }
+    window.grecaptcha.ready(() => {
+      window.grecaptcha.execute(RECAPTCHA_KEY, { action: 'contact' })
+        .then(resolve).catch(() => resolve(''));
+    });
+  });
+}
+
 
 function Contact() {
   const { t } = useTranslation();
@@ -15,7 +27,7 @@ function Contact() {
       const res = await fetch(`${API}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, recaptchaToken: await getRecaptchaToken() }),
       });
       if (!res.ok) throw new Error();
       setStatus("success");

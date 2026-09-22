@@ -190,6 +190,24 @@ app.get('/', (_, res) => res.json({ status: 'ok', mongo: mongoose.connection.rea
 app.get('/health', (_, res) => res.json({ status: 'ok', mongo: mongoose.connection.readyState === 1 }));
 
 
+
+// ── reCAPTCHA v3 Verification ──────────────────────────────
+async function verifyRecaptcha(token) {
+  if (!token) return false;
+  try {
+    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${process.env.RECAPTCHA_SECRET}&response=${token}`,
+    });
+    const data = await res.json();
+    // score >= 0.5 يعني إنسان حقيقي (0 = bot, 1 = human)
+    return data.success && data.score >= 0.5;
+  } catch {
+    return false;
+  }
+}
+
 // ── Email Notification (Resend) ────────────────────────────
 async function sendEmailNotification(client) {
   try {
@@ -233,8 +251,11 @@ async function sendEmailNotification(client) {
 
 app.post('/api/clients', uploadClient.single('image'), async (req, res) => {
   try {
-    const { name, phone, email, country, service, message } = req.body;
+    const { name, phone, email, country, service, message, recaptchaToken } = req.body;
     if (!name || !phone || !message) return res.status(400).json({ message: 'Name, phone and message are required' });
+    // التحقق من reCAPTCHA
+    const isHuman = await verifyRecaptcha(recaptchaToken);
+    if (!isHuman) return res.status(400).json({ message: 'reCAPTCHA verification failed. Please try again.' });
     const client = await Client.create({ name, phone, email: email||'', country: country||'', service: service||'', message, image: req.file ? req.file.path : null });
     sendEmailNotification(client).catch(()=>{});
     res.status(201).json({ success: true, client });
@@ -286,8 +307,10 @@ app.get('/api/collections', async (_, res) => {
 // ── Contact Form ───────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, message } = req.body;
+    const { name, email, message, recaptchaToken } = req.body;
     if (!name || !email || !message) return res.status(400).json({ message: 'All fields required' });
+    const isHuman2 = await verifyRecaptcha(recaptchaToken);
+    if (!isHuman2) return res.status(400).json({ message: 'reCAPTCHA verification failed.' });
 
     // إرسال إيميل إشعار
     await fetch('https://api.resend.com/emails', {
