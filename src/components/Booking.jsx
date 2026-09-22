@@ -16,10 +16,8 @@ function Booking() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");
-    const recaptchaToken = await getRecaptchaToken();
     const data = new FormData();
     Object.entries(form).forEach(([k, v]) => { if (v) data.append(k, v); });
-    data.append('recaptchaToken', recaptchaToken);
     try {
       const res = await fetch(`${API}/api/clients`, { method:"POST", body:data });
       const json = await res.json();
