@@ -251,7 +251,9 @@ async function sendEmailNotification(client) {
 
 app.post('/api/clients', uploadClient.single('image'), async (req, res) => {
   try {
-    const { name, phone, email, country, service, message, recaptchaToken } = req.body;
+    const { name, phone, email, country, service, message, recaptchaToken, website_url } = req.body;
+    // Honeypot — لو اتملا يبقى Bot
+    if (website_url) return res.status(200).json({ success: true }); // نرد بـ 200 عشان الـ Bot ميعرفش إننا شيلناه
     if (!name || !phone || !message) return res.status(400).json({ message: 'Name, phone and message are required' });
     // التحقق من reCAPTCHA
     // reCAPTCHA — logging only, no blocking
@@ -311,7 +313,8 @@ app.get('/api/collections', async (_, res) => {
 // ── Contact Form ───────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, message, recaptchaToken } = req.body;
+    const { name, email, message, recaptchaToken, website_url } = req.body;
+    if (website_url) return res.status(200).json({ success: true });
     if (!name || !email || !message) return res.status(400).json({ message: 'All fields required' });
     // reCAPTCHA — logging only, no blocking
     if (recaptchaToken) {

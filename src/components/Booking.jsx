@@ -5,7 +5,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function Booking() {
   const { t } = useTranslation();
-  const [form, setForm] = useState({ name:"", phone:"", email:"", service:"", country:"", message:"", image:null });
+  const [form, setForm] = useState({ name:"", phone:"", email:"", service:"", country:"", message:"", image:null, website_url:"" });
   const [status, setStatus] = useState("idle");
 
   const handleChange = (e) => {
@@ -80,6 +80,16 @@ function Booking() {
             <span>{form.image ? form.image.name : t('booking_image')}</span>
             <input type="file" name="image" accept="image/*" onChange={handleChange} hidden />
           </label>
+          {/* Honeypot — مخفي للبشر، الـ Bots بيملوه */}
+          <input
+            type="text"
+            name="website_url"
+            value={form.website_url}
+            onChange={e => setForm(f=>({...f,website_url:e.target.value}))}
+            style={{display:'none'}}
+            tabIndex="-1"
+            autoComplete="off"
+          />
           <button type="submit" className="booking-btn" disabled={status === "loading"}>
             {status === "loading" ? t('booking_sending') : t('booking_submit')}
           </button>
